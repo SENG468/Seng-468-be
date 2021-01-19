@@ -1,5 +1,5 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb
-    username: sa
-    password:
+  data:
+    mongodb:
+      auto-index-creation: true
+      uri: ${MONGO_URI}
