@@ -1,6 +1,17 @@
 # Seng-468-be
 
 ---
+## Running the Application
+1. Add all the environmental variables. Contact a dev team member for these values
+2.
+
+    A) Run the Jar java -jar build/libs/stocktrade-1.0.jar
+
+    Or
+
+    B) Run the application from the main file with intellij
+3. The application will now be running on port 8080 with context path /stock-trade
+---
 
 ## Docker
 
