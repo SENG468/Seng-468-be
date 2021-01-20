@@ -11,4 +11,4 @@ spring:
 security:
   #  One day in MS
   expiry-ms: 86400000
-  secret: "super-secret"
+  secret: ${JWT_SECRET}
