@@ -25,6 +25,13 @@ spotless {
         trimTrailingWhitespace()
         endWithNewline()
     }
+    format 'misc', {
+        target '**/*.gradle', '**/*.md', '**/.gitignore', '**/*.sql'
+        targetExclude 'identity-domain-fts360/**'
+        trimTrailingWhitespace()
+        indentWithSpaces()
+        endWithNewline()
+    }
 }
 
 dependencies {
