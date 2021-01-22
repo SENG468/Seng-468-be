@@ -27,7 +27,7 @@ public class AccountsController {
     return accountService.getByName(name);
   }
 
-  @PostMapping("/add-funds")
+  @PostMapping("/add")
   public Account addFundsToAccount(
       @Valid @RequestBody Account account, @RequestHeader("authorization") String authorization) {
     String name = securityService.getUserFromJwt(authorization);
