@@ -1,4 +1,4 @@
-package com.daytrade.stocktrade.Config.Security;
+package com.daytrade.stocktrade.Config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
