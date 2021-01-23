@@ -51,9 +51,27 @@ public class TransactionController {
   public Transaction createLimitOrder(@Valid @RequestBody Transaction transaction) {
     if (transaction.getType().equals(Enums.TransactionType.SELL_AT)
         || transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
-      return transaction.getType().equals(Enums.TransactionType.BUY_AT)
-          ? stockService.createLimitBuyTransaction(transaction)
-          : stockService.createLimitSellTransaction(transaction);
+      return stockService.createLimitTransaction(transaction);
+    } else {
+      throw new BadRequestException("Not correct transaction type");
+    }
+  }
+
+  @PostMapping("/setBuy/trigger")
+  public Transaction triggerBuyLimitOrder(@Valid @RequestBody Transaction newTransaction) {
+    if (newTransaction.getType().equals(Enums.TransactionType.BUY_AT)) {
+      Transaction savedTransaction = stockService.getPendingLimitBuyTransactions();
+      return stockService.triggerLimitTransaction(savedTransaction, newTransaction);
+    } else {
+      throw new BadRequestException("Not correct transaction type");
+    }
+  }
+
+  @PostMapping("/setSell/trigger")
+  public Transaction triggerSellLimitOrder(@Valid @RequestBody Transaction newTransaction) {
+    if (newTransaction.getType().equals(Enums.TransactionType.SELL_AT)) {
+      Transaction savedTransaction = stockService.getPendingLimitSellTransactions();
+      return stockService.triggerLimitTransaction(savedTransaction, newTransaction);
     } else {
       throw new BadRequestException("Not correct transaction type");
     }
@@ -75,7 +93,6 @@ public class TransactionController {
 
   @PostMapping("/sell/commit")
   public Transaction commitSimpleSellOrder() {
-    String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     Transaction transaction = stockService.getPendingSellTransactions();
     transaction = stockService.commitSimpleOrder(transaction);
     stockService.updateAccount(transaction);

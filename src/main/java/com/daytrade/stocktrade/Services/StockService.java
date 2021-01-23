@@ -91,6 +91,22 @@ public class StockService {
         .orElseThrow(EntityMissingException::new);
   }
 
+  public Transaction getPendingLimitBuyTransactions() {
+    String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+    return transactionRepository
+        .findByUserNameAndTypeAndStatus(
+            userName, Enums.TransactionType.BUY_AT, Enums.TransactionStatus.PENDING)
+        .orElseThrow(EntityMissingException::new);
+  }
+
+  public Transaction getPendingLimitSellTransactions() {
+    String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+    return transactionRepository
+        .findByUserNameAndTypeAndStatus(
+            userName, Enums.TransactionType.SELL_AT, Enums.TransactionStatus.PENDING)
+        .orElseThrow(EntityMissingException::new);
+  }
+
   public Account updateAccount(Transaction transaction) {
     Account account = accountService.getByName(transaction.getUserName());
     Map<String, Long> stocks = account.getPortfolio();
@@ -134,6 +150,44 @@ public class StockService {
 
   public Transaction createLimitTransaction(Transaction transaction) {
     transaction.setStatus(Enums.TransactionStatus.PENDING);
-    transactionRepository.save(transaction);
+    return transactionRepository.save(transaction);
+  }
+
+  public Transaction triggerLimitTransaction(
+      Transaction savedTransaction, Transaction newTransaction) {
+    savedTransaction.setUnitPrice(newTransaction.getUnitPrice());
+    savedTransaction.setCashAmount(
+        savedTransaction.getUnitPrice() * savedTransaction.getStockAmount());
+    savedTransaction.setStatus(Enums.TransactionStatus.COMMITTED);
+    if (savedTransaction.getType().equals(Enums.TransactionType.BUY_AT)) {
+      // Remove the money from the account while the order is committed
+      removeMoneyForHold(savedTransaction.getCashAmount(), savedTransaction);
+    } else if (savedTransaction.getType().equals(Enums.TransactionType.SELL_AT)) {
+      // Remove the stock from the portfolio while the order is active
+      removeStockForHold(savedTransaction.getStockAmount(), savedTransaction);
+    }
+
+    return transactionRepository.save(savedTransaction);
+  }
+
+  private Account removeStockForHold(Long stockToSell, Transaction transaction) {
+    Account account = accountService.getByName(transaction.getUserName());
+    Map<String, Long> stocks = account.getPortfolio();
+    long heldStock = stocks.get(transaction.getStockCode());
+    if (heldStock - stockToSell < 0) {
+      throw new BadRequestException("You cannot afford this");
+    }
+    stocks.put(transaction.getStockCode(), heldStock - stockToSell);
+    account.setPortfolio(stocks);
+    return accountService.save(account);
+  }
+
+  private Account removeMoneyForHold(Double cashAmount, Transaction transaction) {
+    Account account = accountService.getByName(transaction.getUserName());
+    if (account.getBalance() - cashAmount < 0) {
+      throw new BadRequestException("You cannot afford this");
+    }
+    account.setBalance(account.getBalance() - cashAmount);
+    return accountService.save(account);
   }
 }
