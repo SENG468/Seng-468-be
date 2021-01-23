@@ -1,16 +1,19 @@
 # Seng-468-be
 
 ---
+
 ## Running the Application
+
 1. Add all the environmental variables. Contact a dev team member for these values
 2.
 
-    A) Run the Jar java -jar build/libs/stocktrade-1.0.jar
+A) Run the Jar java -jar build/libs/stocktrade-1.0.jar
 
-    Or
+Or
 
-    B) Run the application from the main file with intellij
+B) Run the application from the main file with intellij
 3. The application will now be running on port 8080 with context path /stock-trade
+
 ---
 
 ## Docker
@@ -29,3 +32,12 @@ To build and run the docker container
 1. Create a User POST to {HOST}/stock-trade/users/sign-up {username,password,email}
 2. Login POST to {HOST}/stock-trade/users/login
 3. Add the Bearer token to requests as an Authorization header
+
+---
+
+## Swagger
+
+All the requests for the system can be seen using the swagger ui
+available [here](http://localhost:8080/stock-trade/swagger-ui.html)
+Paste the auth token from the login into the authorize button (No prefix just the token) and then all requests will be
+authorized
