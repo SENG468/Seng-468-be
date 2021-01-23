@@ -5,7 +5,7 @@ import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Services.SecurityService;
-import com.daytrade.stocktrade.Services.StockService;
+import com.daytrade.stocktrade.Services.TransactionService;
 import java.util.HashMap;
 import java.util.Map;
 import javax.validation.Valid;
@@ -16,12 +16,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 public class TransactionController {
 
-  private final StockService stockService;
+  private final TransactionService transactionService;
   private final SecurityService securityService;
 
   @Autowired
-  public TransactionController(StockService stockService, SecurityService securityService) {
-    this.stockService = stockService;
+  public TransactionController(
+      TransactionService transactionService, SecurityService securityService) {
+    this.transactionService = transactionService;
     this.securityService = securityService;
   }
 
@@ -29,7 +30,7 @@ public class TransactionController {
   public Map<String, Double> getQuote(@PathVariable("stockSym") String stockSym) {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     Map<String, Double> out = new HashMap<>();
-    Double quote = stockService.getQuote(name, stockSym);
+    Double quote = transactionService.getQuote(name, stockSym);
     // Log here
     out.put(stockSym, quote);
     return out;
@@ -40,8 +41,8 @@ public class TransactionController {
     if (transaction.getType().equals(Enums.TransactionType.SELL)
         || transaction.getType().equals(Enums.TransactionType.BUY)) {
       return transaction.getType().equals(Enums.TransactionType.BUY)
-          ? stockService.createSimpleBuyTransaction(transaction)
-          : stockService.createSimpleSellTransaction(transaction);
+          ? transactionService.createSimpleBuyTransaction(transaction)
+          : transactionService.createSimpleSellTransaction(transaction);
     } else {
       throw new BadRequestException("Not correct transaction type");
     }
@@ -51,7 +52,7 @@ public class TransactionController {
   public Transaction createLimitOrder(@Valid @RequestBody Transaction transaction) {
     if (transaction.getType().equals(Enums.TransactionType.SELL_AT)
         || transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
-      return stockService.createLimitTransaction(transaction);
+      return transactionService.createLimitTransaction(transaction);
     } else {
       throw new BadRequestException("Not correct transaction type");
     }
@@ -60,8 +61,8 @@ public class TransactionController {
   @PostMapping("/setBuy/trigger")
   public Transaction triggerBuyLimitOrder(@Valid @RequestBody Transaction newTransaction) {
     if (newTransaction.getType().equals(Enums.TransactionType.BUY_AT)) {
-      Transaction savedTransaction = stockService.getPendingLimitBuyTransactions();
-      return stockService.triggerLimitTransaction(savedTransaction, newTransaction);
+      Transaction savedTransaction = transactionService.getPendingLimitBuyTransactions();
+      return transactionService.triggerLimitTransaction(savedTransaction, newTransaction);
     } else {
       throw new BadRequestException("Not correct transaction type");
     }
@@ -70,39 +71,53 @@ public class TransactionController {
   @PostMapping("/setSell/trigger")
   public Transaction triggerSellLimitOrder(@Valid @RequestBody Transaction newTransaction) {
     if (newTransaction.getType().equals(Enums.TransactionType.SELL_AT)) {
-      Transaction savedTransaction = stockService.getPendingLimitSellTransactions();
-      return stockService.triggerLimitTransaction(savedTransaction, newTransaction);
+      Transaction savedTransaction = transactionService.getPendingLimitSellTransactions();
+      return transactionService.triggerLimitTransaction(savedTransaction, newTransaction);
     } else {
       throw new BadRequestException("Not correct transaction type");
     }
   }
 
+  @PostMapping("/setSell/cancel")
+  public Transaction cancelSellLimitOrder() {
+    Transaction savedTransaction = transactionService.getPendingLimitSellTransactions();
+    savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
+    return transactionService.cancelSellLimitTransaction(savedTransaction);
+  }
+
+  @PostMapping("/setBuy/cancel")
+  public Transaction cancelBuyLimitOrder() {
+    Transaction savedTransaction = transactionService.getPendingLimitBuyTransactions();
+    savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
+    return transactionService.cancelBuyLimitTransaction(savedTransaction);
+  }
+
   @PostMapping("/buy/cancel")
   public Transaction cancelBuyOrder() {
-    Transaction transaction = stockService.getPendingBuyTransactions();
+    Transaction transaction = transactionService.getPendingBuyTransactions();
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
-    return stockService.cancelTransaction(transaction);
+    return transactionService.cancelTransaction(transaction);
   }
 
   @PostMapping("/sell/cancel")
   public Transaction cancelSellOrder() {
-    Transaction transaction = stockService.getPendingSellTransactions();
+    Transaction transaction = transactionService.getPendingSellTransactions();
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
-    return stockService.cancelTransaction(transaction);
+    return transactionService.cancelTransaction(transaction);
   }
 
   @PostMapping("/sell/commit")
   public Transaction commitSimpleSellOrder() {
-    Transaction transaction = stockService.getPendingSellTransactions();
-    transaction = stockService.commitSimpleOrder(transaction);
-    stockService.updateAccount(transaction);
+    Transaction transaction = transactionService.getPendingSellTransactions();
+    transaction = transactionService.commitSimpleOrder(transaction);
+    transactionService.updateAccount(transaction);
     return transaction;
   }
 
   @PostMapping("/buy/commit")
   public Account commitSimpleBuyOrder() {
-    Transaction transaction = stockService.getPendingBuyTransactions();
-    transaction = stockService.commitSimpleOrder(transaction);
-    return stockService.updateAccount(transaction);
+    Transaction transaction = transactionService.getPendingBuyTransactions();
+    transaction = transactionService.commitSimpleOrder(transaction);
+    return transactionService.updateAccount(transaction);
   }
 }

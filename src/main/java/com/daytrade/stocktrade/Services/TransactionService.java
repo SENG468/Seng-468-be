@@ -11,12 +11,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class StockService {
+public class TransactionService {
 
   private final TransactionRepository transactionRepository;
   private final AccountService accountService;
 
-  public StockService(TransactionRepository transactionRepository, AccountService accountService) {
+  public TransactionService(
+      TransactionRepository transactionRepository, AccountService accountService) {
 
     this.transactionRepository = transactionRepository;
     this.accountService = accountService;
@@ -189,5 +190,22 @@ public class StockService {
     }
     account.setBalance(account.getBalance() - cashAmount);
     return accountService.save(account);
+  }
+
+  public Transaction cancelSellLimitTransaction(Transaction transaction) {
+    Account account = accountService.getByName(transaction.getUserName());
+    Map<String, Long> stocks = account.getPortfolio();
+    long newStockAmount = stocks.get(transaction.getStockCode()) + transaction.getStockAmount();
+    stocks.put(transaction.getStockCode(), newStockAmount);
+    account.setPortfolio(stocks);
+    accountService.save(account);
+    return transactionRepository.save(transaction);
+  }
+
+  public Transaction cancelBuyLimitTransaction(Transaction transaction) {
+    Account account = accountService.getByName(transaction.getUserName());
+    account.setBalance(account.getBalance() + transaction.getCashAmount());
+    accountService.save(account);
+    return transactionRepository.save(transaction);
   }
 }
