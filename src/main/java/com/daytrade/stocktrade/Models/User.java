@@ -21,7 +21,7 @@ public class User {
 
   @Email @NotBlank private String email;
 
-  @NotNull @NotBlank private String securityCode;
+  private String securityCode;
 
   @NotNull @NotBlank private String password;
 }

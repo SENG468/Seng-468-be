@@ -69,6 +69,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     // Add the token to the body
     Map<String, String> authResp = new HashMap<>();
     authResp.put("access_token", SecurityConsts.AUTH_HEADER_PREFIX + token);
+    response.setContentType("application/json");
     response.getWriter().write(objectMapper.writeValueAsString(authResp));
     response.getWriter().flush();
     response.getWriter().close();
