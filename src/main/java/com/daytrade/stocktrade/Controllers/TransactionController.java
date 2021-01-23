@@ -2,6 +2,7 @@ package com.daytrade.stocktrade.Controllers;
 
 import com.daytrade.stocktrade.Models.Account;
 import com.daytrade.stocktrade.Models.Enums;
+import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Services.SecurityService;
 import com.daytrade.stocktrade.Services.StockService;
@@ -34,26 +35,56 @@ public class TransactionController {
     return out;
   }
 
-  @PostMapping("/order/simple")
-  public Transaction createOrder(@Valid @RequestBody Transaction transaction) {
-    return transaction.getType().equals(Enums.TransactionType.BUY)
-        ? stockService.createBuyTransaction(transaction)
-        : stockService.createSellTransaction(transaction);
+  @PostMapping("/order")
+  public Transaction createSimpleOrder(@Valid @RequestBody Transaction transaction) {
+    if (transaction.getType().equals(Enums.TransactionType.SELL)
+        || transaction.getType().equals(Enums.TransactionType.BUY)) {
+      return transaction.getType().equals(Enums.TransactionType.BUY)
+          ? stockService.createSimpleBuyTransaction(transaction)
+          : stockService.createSimpleSellTransaction(transaction);
+    } else {
+      throw new BadRequestException("Not correct transaction type");
+    }
   }
 
-  @PostMapping("/commit/sell")
-  public Transaction commitSellOrder() {
+  @PostMapping("/order/limit")
+  public Transaction createLimitOrder(@Valid @RequestBody Transaction transaction) {
+    if (transaction.getType().equals(Enums.TransactionType.SELL_AT)
+        || transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
+      return transaction.getType().equals(Enums.TransactionType.BUY_AT)
+          ? stockService.createLimitBuyTransaction(transaction)
+          : stockService.createLimitSellTransaction(transaction);
+    } else {
+      throw new BadRequestException("Not correct transaction type");
+    }
+  }
+
+  @PostMapping("/buy/cancel")
+  public Transaction cancelBuyOrder() {
+    Transaction transaction = stockService.getPendingBuyTransactions();
+    transaction.setStatus(Enums.TransactionStatus.CANCELED);
+    return stockService.cancelTransaction(transaction);
+  }
+
+  @PostMapping("/sell/cancel")
+  public Transaction cancelSellOrder() {
+    Transaction transaction = stockService.getPendingSellTransactions();
+    transaction.setStatus(Enums.TransactionStatus.CANCELED);
+    return stockService.cancelTransaction(transaction);
+  }
+
+  @PostMapping("/sell/commit")
+  public Transaction commitSimpleSellOrder() {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    Transaction transaction = stockService.getPendingSellTransactions(userName);
+    Transaction transaction = stockService.getPendingSellTransactions();
     transaction = stockService.commitSimpleOrder(transaction);
     stockService.updateAccount(transaction);
     return transaction;
   }
 
-  @PostMapping("/commit/buy")
-  public Account commitBuyOrder() {
-    String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    Transaction transaction = stockService.getPendingBuyTransactions(userName);
+  @PostMapping("/buy/commit")
+  public Account commitSimpleBuyOrder() {
+    Transaction transaction = stockService.getPendingBuyTransactions();
     transaction = stockService.commitSimpleOrder(transaction);
     return stockService.updateAccount(transaction);
   }

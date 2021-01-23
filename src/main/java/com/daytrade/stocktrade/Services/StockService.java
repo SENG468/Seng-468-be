@@ -7,6 +7,7 @@ import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Repositories.TransactionRepository;
 import java.util.Map;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,19 +26,25 @@ public class StockService {
     return 20D;
   }
 
-  public Transaction createBuyTransaction(Transaction transaction) {
+  public Transaction createSimpleBuyTransaction(Transaction transaction) {
     double quote = getQuote(transaction.getUserName(), transaction.getStockCode());
     Account account = accountService.getByName(transaction.getUserName());
+
+    if (transaction.getCashAmount() == null) {
+      throw new BadRequestException("Invalid Request");
+    }
+
     long stockAmount = (long) (transaction.getCashAmount() / quote);
 
     if (stockAmount < 1 || (account.getBalance() < transaction.getCashAmount())) {
       throw new BadRequestException("You cannot afford this transaction");
     }
 
-    return createTransaction(transaction, quote, stockAmount);
+    return createSimpleTransaction(transaction, quote, stockAmount);
   }
 
-  private Transaction createTransaction(Transaction transaction, double quote, long stockAmount) {
+  private Transaction createSimpleTransaction(
+      Transaction transaction, double quote, long stockAmount) {
     transaction.setUnitPrice(quote);
     transaction.setCashAmount(quote * stockAmount);
     transaction.setStockAmount(stockAmount);
@@ -45,9 +52,13 @@ public class StockService {
     return transactionRepository.save(transaction);
   }
 
-  public Transaction createSellTransaction(Transaction transaction) {
+  public Transaction createSimpleSellTransaction(Transaction transaction) {
     double quote = getQuote(transaction.getUserName(), transaction.getStockCode());
     Account account = accountService.getByName(transaction.getUserName());
+    if (transaction.getCashAmount() == null) {
+      throw new BadRequestException("Invalid Request");
+    }
+
     long stockAmount = (long) (transaction.getCashAmount() / quote);
     if (stockAmount < 1) {
       throw new BadRequestException("Stock price too high");
@@ -55,7 +66,7 @@ public class StockService {
     if (account.getPortfolio().get(transaction.getStockCode()) < stockAmount) {
       throw new BadRequestException("You do not have the stock for this transaction");
     }
-    return createTransaction(transaction, quote, stockAmount);
+    return createSimpleTransaction(transaction, quote, stockAmount);
   }
 
   // Make sure to change status to committed or filled here
@@ -64,14 +75,16 @@ public class StockService {
     return transactionRepository.save(transaction);
   }
 
-  public Transaction getPendingSellTransactions(String userName) {
+  public Transaction getPendingSellTransactions() {
+    String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     return transactionRepository
         .findByUserNameAndTypeAndStatus(
             userName, Enums.TransactionType.SELL, Enums.TransactionStatus.PENDING)
         .orElseThrow(EntityMissingException::new);
   }
 
-  public Transaction getPendingBuyTransactions(String userName) {
+  public Transaction getPendingBuyTransactions() {
+    String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     return transactionRepository
         .findByUserNameAndTypeAndStatus(
             userName, Enums.TransactionType.BUY, Enums.TransactionStatus.PENDING)
@@ -113,5 +126,14 @@ public class StockService {
       account.setBalance(newMoney);
     }
     return accountService.save(account);
+  }
+
+  public Transaction cancelTransaction(Transaction transaction) {
+    return transactionRepository.save(transaction);
+  }
+
+  public Transaction createLimitTransaction(Transaction transaction) {
+    transaction.setStatus(Enums.TransactionStatus.PENDING);
+    transactionRepository.save(transaction);
   }
 }
