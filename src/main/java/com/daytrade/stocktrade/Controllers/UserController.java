@@ -1,5 +1,6 @@
 package com.daytrade.stocktrade.Controllers;
 
+import com.daytrade.stocktrade.Models.LoginRequest;
 import com.daytrade.stocktrade.Models.User;
 import com.daytrade.stocktrade.Services.UserService;
 import javax.validation.Valid;
@@ -19,5 +20,12 @@ public class UserController {
   @PostMapping("/sign-up")
   public User signUp(@Valid @RequestBody User user) {
     return this.userService.createUser(user);
+  }
+
+  // DO NOT REMOVE
+  // Method stub for the swagger
+  @PostMapping("/login")
+  public String login(@RequestBody LoginRequest user) {
+    return "";
   }
 }
