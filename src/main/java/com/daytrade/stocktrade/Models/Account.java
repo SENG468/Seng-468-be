@@ -1,5 +1,7 @@
 package com.daytrade.stocktrade.Models;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -21,4 +23,6 @@ public class Account {
 
   @Indexed(unique = true)
   private String name;
+
+  private Map<String, Long> portfolio = new HashMap<>();
 }
