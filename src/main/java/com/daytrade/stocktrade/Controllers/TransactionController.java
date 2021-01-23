@@ -36,8 +36,6 @@ public class TransactionController {
 
   @PostMapping("/order/simple")
   public Transaction createOrder(@Valid @RequestBody Transaction transaction) {
-    String name = SecurityContextHolder.getContext().getAuthentication().getName();
-    transaction.setUserName(name);
     return transaction.getType().equals(Enums.TransactionType.BUY)
         ? stockService.createBuyTransaction(transaction)
         : stockService.createSellTransaction(transaction);
