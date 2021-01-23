@@ -35,7 +35,7 @@ public class TransactionController {
     return out;
   }
 
-  @PostMapping("/order")
+  @PostMapping("/order/simple")
   public Transaction createSimpleOrder(@Valid @RequestBody Transaction transaction) {
     if (transaction.getType().equals(Enums.TransactionType.SELL)
         || transaction.getType().equals(Enums.TransactionType.BUY)) {
