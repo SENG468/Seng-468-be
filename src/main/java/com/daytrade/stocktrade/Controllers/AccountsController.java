@@ -1,7 +1,6 @@
 package com.daytrade.stocktrade.Controllers;
 
 import com.daytrade.stocktrade.Models.Account;
-import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Services.AccountService;
 import com.daytrade.stocktrade.Services.SecurityService;
@@ -28,12 +27,7 @@ public class AccountsController {
   }
 
   @PostMapping("/add")
-  public Account addFundsToAccount(
-      @Valid @RequestBody Account account, @RequestHeader("authorization") String authorization) {
-    String name = securityService.getUserFromJwt(authorization);
-    if (!name.equals(account.getName())) {
-      throw new BadRequestException("You can only add funds to an account you own");
-    }
+  public Account addFundsToAccount(@Valid @RequestBody Account account) {
     return accountService.addFundsToAccount(account);
   }
 }
