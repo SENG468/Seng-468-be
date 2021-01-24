@@ -30,4 +30,8 @@ public class AccountService {
   public Account createNewAccount(String username) {
     return accountRepository.save(new Account(username));
   }
+
+  public Account save(Account account) {
+    return accountRepository.save(account);
+  }
 }
