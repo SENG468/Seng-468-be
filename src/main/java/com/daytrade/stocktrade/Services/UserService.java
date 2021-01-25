@@ -13,15 +13,18 @@ public class UserService {
   private final UserRepository userRepository;
   private final AccountService accountService;
   private final BCryptPasswordEncoder passwordEncoder;
+  private final LoggerService loggerService;
 
   @Autowired
   public UserService(
       UserRepository userRepository,
       AccountService accountService,
+      LoggerService loggerService,
       BCryptPasswordEncoder passwordEncoder) {
     this.userRepository = userRepository;
     this.accountService = accountService;
     this.passwordEncoder = passwordEncoder;
+    this.loggerService = loggerService;
   }
 
   public User createUser(User user) {
@@ -30,6 +33,7 @@ public class UserService {
       User out = userRepository.save(user);
       out.setPassword(null);
       accountService.createNewAccount(user.getUsername());
+      loggerService.createAccountTransactionLog(user.getUsername(), null, "signup", 0.0);
       return out;
     } catch (MongoWriteException ex) {
       throw new BadRequestException("A user with this username already exist");
@@ -37,6 +41,7 @@ public class UserService {
   }
 
   public User findByUsername(String username) {
+    loggerService.createAccountTransactionLog(username, null, "login", 0.0);
     return userRepository.findByUsername(username);
   }
 }

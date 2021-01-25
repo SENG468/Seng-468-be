@@ -11,10 +11,12 @@ import org.springframework.stereotype.Service;
 public class AccountService {
 
   private final AccountRepository accountRepository;
+  private final LoggerService loggerService;
 
   @Autowired
-  public AccountService(AccountRepository accountRepository) {
+  public AccountService(AccountRepository accountRepository, LoggerService loggerService) {
     this.accountRepository = accountRepository;
+    this.loggerService = loggerService;
   }
 
   public Account addFundsToAccount(Account request) throws EntityMissingException {
@@ -22,6 +24,7 @@ public class AccountService {
     Account account = accountRepository.findByName(name).orElseThrow(EntityMissingException::new);
     account.setBalance(account.getBalance() + request.getBalance());
 
+    loggerService.createAccountTransactionLog(name, 1L, "add", request.getBalance());
     account.setName(name);
     return accountRepository.save(account);
   }
