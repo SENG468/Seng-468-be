@@ -1,20 +1,18 @@
 package com.daytrade.stocktrade.Models;
 
-import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Instant;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
-
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "logs")
 @Data
 public class Logger {
 
-  public Logger() {
-  }
+  public Logger() {}
 
   public Logger(Enums.LogType logType, Long transactionNumber, String serverName) {
     this.logType = logType;
@@ -22,17 +20,13 @@ public class Logger {
     this.transactionNumber = transactionNumber;
   }
 
-  @Id
-  public String id;
+  @Id public String id;
 
-  @NotNull
-  private Enums.LogType logType;
+  @NotNull private Enums.LogType logType;
 
-  @NotBlank
-  private String serverName;
+  @NotBlank private String serverName;
 
-  @NotNull
-  private Long transactionNumber;
+  @NotNull private Long transactionNumber;
 
   private Enums.CommandType commandType;
 
@@ -55,5 +49,4 @@ public class Logger {
   private String action;
 
   private String message;
-
 }

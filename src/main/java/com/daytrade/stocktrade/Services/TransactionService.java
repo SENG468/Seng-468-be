@@ -18,7 +18,9 @@ public class TransactionService {
   private final LoggerService loggerService;
 
   public TransactionService(
-      TransactionRepository transactionRepository, AccountService accountService, LoggerService loggerService) {
+      TransactionRepository transactionRepository,
+      AccountService accountService,
+      LoggerService loggerService) {
 
     this.transactionRepository = transactionRepository;
     this.accountService = accountService;
@@ -44,7 +46,13 @@ public class TransactionService {
       throw new BadRequestException("You cannot afford this transaction");
     }
 
-    loggerService.createCommandLog(transaction.getUserName(), null, Enums.CommandType.BUY, transaction.getStockCode(), null, quote * stockAmount);
+    loggerService.createCommandLog(
+        transaction.getUserName(),
+        null,
+        Enums.CommandType.BUY,
+        transaction.getStockCode(),
+        null,
+        quote * stockAmount);
     return createSimpleTransaction(transaction, quote, stockAmount);
   }
 
@@ -72,15 +80,27 @@ public class TransactionService {
       throw new BadRequestException("You do not have the stock for this transaction");
     }
 
-    loggerService.createCommandLog(transaction.getUserName(), null, Enums.CommandType.SELL, transaction.getStockCode(), null, quote * stockAmount);
+    loggerService.createCommandLog(
+        transaction.getUserName(),
+        null,
+        Enums.CommandType.SELL,
+        transaction.getStockCode(),
+        null,
+        quote * stockAmount);
     return createSimpleTransaction(transaction, quote, stockAmount);
   }
 
   // Make sure to change status to committed or filled here
   public Transaction commitSimpleOrder(Transaction transaction) {
     transaction.setStatus(Enums.TransactionStatus.FILLED);
-    
-    loggerService.createCommandLog(transaction.getUserName(), null, Enums.CommandType.BUY, transaction.getStockCode(), null, transaction.getCashAmount());
+
+    loggerService.createCommandLog(
+        transaction.getUserName(),
+        null,
+        Enums.CommandType.BUY,
+        transaction.getStockCode(),
+        null,
+        transaction.getCashAmount());
     return transactionRepository.save(transaction);
   }
 
