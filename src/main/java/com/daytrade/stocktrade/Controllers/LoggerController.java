@@ -3,8 +3,10 @@ package com.daytrade.stocktrade.Controllers;
 import com.daytrade.stocktrade.Models.Logger;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Services.LoggerService;
-import com.daytrade.stocktrade.Services.SecurityService;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,34 +15,30 @@ import org.springframework.web.bind.annotation.*;
 public class LoggerController {
 
   private final LoggerService loggerService;
-  private final SecurityService securityService;
 
-  public LoggerController(LoggerService loggerService, SecurityService securityService) {
+  public LoggerController(LoggerService loggerService) {
     this.loggerService = loggerService;
-    this.securityService = securityService;
   }
 
   // This endpoint should only be able to be accessed by admin
   @GetMapping("/all")
-  public Page<Logger> getAllLogs(@RequestHeader("authorization") String authorization,
-      @RequestParam("page_size") int pageSize) {
+  public Page<Logger> getAllLogs(@PageableDefault(size = 2000) Pageable page) {
     // TODO: Check caller is admin
-    return loggerService.getAllLogs(pageSize);
+    return loggerService.getAllLogs(page);
   }
 
   // Also for admin, can access any particular user logs
   @GetMapping("/user/{userId}")
-  public Page<Logger> getLogsByUser(@RequestHeader("authorization") String authorization,
-      @PathVariable("userId") String userId, @RequestParam("page_size") int pageSize) throws EntityMissingException {
+  public Page<Logger> getLogsByUser(@PathVariable("userId") String userId, @PageableDefault(size = 2000) Pageable page)
+      throws EntityMissingException {
     // TODO: Check caller is admin
-    return loggerService.getByUserName(userId, pageSize);
+    return loggerService.getByUserName(userId, page);
   }
 
   // Normal user can only access their own logs based of jwt
   @GetMapping("/user")
-  public Page<Logger> getLogsForUser(@RequestHeader("authorization") String authorization,
-      @RequestParam("page_size") int pageSize) throws EntityMissingException {
-    String name = securityService.getUserFromJwt(authorization);
-    return loggerService.getByUserName(name, pageSize);
+  public Page<Logger> getLogsForUser(@PageableDefault(size = 200) Pageable page) throws EntityMissingException {
+    String name = SecurityContextHolder.getContext().getAuthentication().getName();
+    return loggerService.getByUserName(name, page);
   }
 }

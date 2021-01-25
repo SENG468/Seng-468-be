@@ -2,7 +2,6 @@ package com.daytrade.stocktrade.Services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -26,9 +25,8 @@ public class LoggerService {
    * @param pageSize
    * @return Page object containing all logs (up to page size)
    */
-  public Page<Logger> getAllLogs(int pageSize) {
-    Pageable paging = PageRequest.of(0, pageSize);
-    return loggerRepository.findAll(paging);
+  public Page<Logger> getAllLogs(Pageable page) {
+    return loggerRepository.findAll(page);
   }
 
   /**
@@ -38,9 +36,8 @@ public class LoggerService {
    * @param pageSize - page size
    * @return Page object containing logs of specified user.
    */
-  public Page<Logger> getByUserName(String username, int pageSize) {
-    Pageable paging = PageRequest.of(0, pageSize);
-    Page<Logger> results = loggerRepository.findByUserName(username, paging).orElseThrow(EntityMissingException::new);
+  public Page<Logger> getByUserName(String username, Pageable page) {
+    Page<Logger> results = loggerRepository.findByUserName(username, page).orElseThrow(EntityMissingException::new);
     return results;
 
   }

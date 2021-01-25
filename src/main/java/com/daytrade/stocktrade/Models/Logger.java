@@ -5,6 +5,8 @@ import java.time.Instant;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
+
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 
 @Document(collection = "logs")
@@ -18,7 +20,6 @@ public class Logger {
     this.logType = logType;
     this.serverName = serverName;
     this.transactionNumber = transactionNumber;
-    this.timestamp = Instant.now().toEpochMilli();
   }
 
   @Id
@@ -37,7 +38,7 @@ public class Logger {
 
   private String userName;
 
-  private Long timestamp;
+  @CreatedDate private Instant timestamp;
 
   private String stockSymbol;
 
