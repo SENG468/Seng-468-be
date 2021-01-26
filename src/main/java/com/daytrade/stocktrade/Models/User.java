@@ -1,5 +1,6 @@
 package com.daytrade.stocktrade.Models;
 
+import java.math.BigInteger;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -12,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 public class User {
 
-  @Id private String id;
+  @Id private BigInteger id;
 
   @NotNull
   @NotBlank
