@@ -7,13 +7,15 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class QuoteService {
 
-    private LoggerService loggerService;
+    private final LoggerService loggerService;
 
+    @Autowired
     public QuoteService(LoggerService loggerService){
         this.loggerService = loggerService;
     }

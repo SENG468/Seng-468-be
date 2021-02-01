@@ -16,23 +16,27 @@ public class TransactionService {
   private final TransactionRepository transactionRepository;
   private final AccountService accountService;
   private final LoggerService loggerService;
+  private final QuoteService quoteService;
 
   public TransactionService(
       TransactionRepository transactionRepository,
       AccountService accountService,
-      LoggerService loggerService) {
+      LoggerService loggerService,
+      QuoteService quoteService) {
 
     this.transactionRepository = transactionRepository;
     this.accountService = accountService;
     this.loggerService = loggerService;
+    this.quoteService = quoteService;
   }
 
-  public Double getQuote(String userId, String stockSymbol) {
+  public Double getQuote(String userId, String stockSymbol) throws Exception {
     loggerService.createCommandLog(userId, null, Enums.CommandType.QUOTE, stockSymbol, null, null);
-    return 20D;
+    double quote = quoteService.quote(userId, stockSymbol);
+    return quote;
   }
 
-  public Transaction createSimpleBuyTransaction(Transaction transaction) {
+  public Transaction createSimpleBuyTransaction(Transaction transaction) throws Exception {
     double quote = getQuote(transaction.getUserName(), transaction.getStockCode());
     Account account = accountService.getByName(transaction.getUserName());
 
@@ -65,7 +69,7 @@ public class TransactionService {
     return transactionRepository.save(transaction);
   }
 
-  public Transaction createSimpleSellTransaction(Transaction transaction) {
+  public Transaction createSimpleSellTransaction(Transaction transaction) throws Exception {
     double quote = getQuote(transaction.getUserName(), transaction.getStockCode());
     Account account = accountService.getByName(transaction.getUserName());
     if (transaction.getCashAmount() == null) {
