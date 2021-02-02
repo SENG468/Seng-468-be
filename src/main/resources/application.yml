@@ -9,9 +9,9 @@ spring:
   data:
     mongodb:
       auto-index-creation: true
-      uri: "mongodb+srv://root:wjMpbMUdk1dnN9IM@seng468.scxay.mongodb.net/stockTrade?retryWrites=true&w=majority"
+      uri: ${MONGO_URI}
 
 security:
   #  One day in MS
   expiry-ms: 86400000
-  secret: JWT=super-secret
+  secret: ${JWT_SECRET}
