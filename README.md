@@ -5,6 +5,7 @@
 ## Running the Application
 
 1. Add all the environmental variables. 
+
 2.Contact a dev team member for these values
 
 A) Run the Jar java -jar build/libs/stocktrade-1.0.jar
