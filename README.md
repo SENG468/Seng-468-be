@@ -21,8 +21,9 @@
 To build and run the docker container
 
 1. `./gradlew bootJar` This builds the jar that will be put into the docker
+2.  Export the MONGO_URI and JWT_SECRET environment variables the values can be gotten from the dev team
 2. `docker build -t stocktrade .` This creates the container image. Must be run from the `Seng-468-be/` directory
-3. `docker run -p {hostPort}:8080 stocktrade` The app can then be access at the host port
+3. `docker run -e MONGO_URI -e JWT_SECRET -p {hostPort}:8080 stocktrade` The app can then be access at the host port
 4. ^C (Ctrl. C) to end the program
 
 ---
