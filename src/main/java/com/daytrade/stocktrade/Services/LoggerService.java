@@ -5,6 +5,7 @@ import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Logger;
 import com.daytrade.stocktrade.Repositories.LoggerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ public class LoggerService {
    * Returns all logs recorded during system run.
    *
    * @param pageSize
-   * @return Page object containing all logs (up to page size)
+   * @return Page object containing all logs (up to page size)F
    */
   public Page<Logger> getAllLogs(Pageable page) {
     return loggerRepository.findAll(page);
@@ -228,6 +229,12 @@ public class LoggerService {
             funds,
             debugMessage);
     return loggerRepository.save(log);
+  }
+
+  public FileSystemResource generateLogFile(String username) {
+    String logname = username == null ? "src/logfiles/logs.xml" : "src/logfiles/" + username + "-logs.xml";
+    FileSystemResource resource = new FileSystemResource(logname);
+    return resource;
   }
 
   private Logger createLog(
