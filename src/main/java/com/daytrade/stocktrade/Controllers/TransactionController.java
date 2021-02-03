@@ -3,6 +3,7 @@ package com.daytrade.stocktrade.Controllers;
 import com.daytrade.stocktrade.Models.Account;
 import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
+import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Services.SecurityService;
 import com.daytrade.stocktrade.Services.TransactionService;
@@ -78,18 +79,33 @@ public class TransactionController {
     }
   }
 
-  @PostMapping("/setSell/cancel")
-  public Transaction cancelSellLimitOrder() {
-    Transaction savedTransaction = transactionService.getPendingLimitSellTransactions();
-    savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
-    return transactionService.cancelSellLimitTransaction(savedTransaction);
+  @PostMapping("/setSell/cancel/{stock}")
+  public Transaction cancelSellLimitOrder(@PathVariable("stock") String stockTicker) {
+    try {
+      Transaction savedTransaction =
+          transactionService.getPendingLimitSellTransactionsByTicker(stockTicker);
+      savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
+      return transactionService.cancelSellLimitTransaction(savedTransaction);
+    } catch (EntityMissingException ex) {
+      Transaction savedTransaction =
+          transactionService.getCommittedLimitSellTransactionsByTicker(stockTicker);
+      savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
+      return transactionService.cancelSellLimitTransaction(savedTransaction);
+    }
   }
 
-  @PostMapping("/setBuy/cancel")
-  public Transaction cancelBuyLimitOrder() {
-    Transaction savedTransaction = transactionService.getPendingLimitBuyTransactions();
-    savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
-    return transactionService.cancelBuyLimitTransaction(savedTransaction);
+  @PostMapping("/setBuy/cancel/{stock}")
+  public Transaction cancelBuyLimitOrder(@PathVariable("stock") String stockTicker) {
+    try {
+      Transaction savedTransaction =
+          transactionService.getPendingLimitBuyTransactionsByTicker(stockTicker);
+      savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
+      return transactionService.cancelBuyLimitTransaction(savedTransaction);
+    } catch (EntityMissingException ex) {
+      Transaction savedTransaction =
+          transactionService.getCommittedLimitBuyTransactionsByTicker(stockTicker);
+      return transactionService.cancelBuyLimitTransaction(savedTransaction);
+    }
   }
 
   @PostMapping("/buy/cancel")

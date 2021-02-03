@@ -138,6 +138,53 @@ public class TransactionService {
     return buyTransactions.get(0);
   }
 
+  public Transaction getPendingLimitSellTransactionsByTicker(String stockTicker) {
+    String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+    List<Transaction> sellTransactions =
+        transactionRepository.findByUserNameAndTypeAndStatusAndStockCodeOrderByCreatedDate(
+            userName, Enums.TransactionType.SELL_AT, Enums.TransactionStatus.PENDING, stockTicker);
+    if (sellTransactions.size() < 1) {
+      throw new EntityMissingException();
+    }
+    return sellTransactions.get(0);
+  }
+
+  public Transaction getCommittedLimitSellTransactionsByTicker(String stockTicker) {
+    String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+    List<Transaction> sellTransactions =
+        transactionRepository.findByUserNameAndTypeAndStatusAndStockCodeOrderByCreatedDate(
+            userName,
+            Enums.TransactionType.SELL_AT,
+            Enums.TransactionStatus.COMMITTED,
+            stockTicker);
+    if (sellTransactions.size() < 1) {
+      throw new EntityMissingException();
+    }
+    return sellTransactions.get(0);
+  }
+
+  public Transaction getPendingLimitBuyTransactionsByTicker(String stockTicker) {
+    String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+    List<Transaction> sellTransactions =
+        transactionRepository.findByUserNameAndTypeAndStatusAndStockCodeOrderByCreatedDate(
+            userName, Enums.TransactionType.BUY_AT, Enums.TransactionStatus.PENDING, stockTicker);
+    if (sellTransactions.size() < 1) {
+      throw new EntityMissingException();
+    }
+    return sellTransactions.get(0);
+  }
+
+  public Transaction getCommittedLimitBuyTransactionsByTicker(String stockTicker) {
+    String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+    List<Transaction> sellTransactions =
+        transactionRepository.findByUserNameAndTypeAndStatusAndStockCodeOrderByCreatedDate(
+            userName, Enums.TransactionType.BUY_AT, Enums.TransactionStatus.COMMITTED, stockTicker);
+    if (sellTransactions.size() < 1) {
+      throw new EntityMissingException();
+    }
+    return sellTransactions.get(0);
+  }
+
   public Transaction getPendingLimitSellTransactions() {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> sellTransactions =
@@ -192,6 +239,10 @@ public class TransactionService {
 
   public Transaction createLimitTransaction(Transaction transaction) {
     transaction.setStatus(Enums.TransactionStatus.PENDING);
+    if (transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
+      // Remove the stock from the portfolio while the order is active
+      removeStockForHold(transaction.getStockAmount(), transaction);
+    }
     return transactionRepository.save(transaction);
   }
 
@@ -204,9 +255,6 @@ public class TransactionService {
     if (savedTransaction.getType().equals(Enums.TransactionType.BUY_AT)) {
       // Remove the money from the account while the order is committed
       removeMoneyForHold(savedTransaction.getCashAmount(), savedTransaction);
-    } else if (savedTransaction.getType().equals(Enums.TransactionType.SELL_AT)) {
-      // Remove the stock from the portfolio while the order is active
-      removeStockForHold(savedTransaction.getStockAmount(), savedTransaction);
     }
 
     return transactionRepository.save(savedTransaction);
@@ -215,8 +263,8 @@ public class TransactionService {
   private Account removeStockForHold(Long stockToSell, Transaction transaction) {
     Account account = accountService.getByName(transaction.getUserName());
     Map<String, Long> stocks = account.getPortfolio();
-    long heldStock = stocks.get(transaction.getStockCode());
-    if (heldStock - stockToSell < 0) {
+    Long heldStock = stocks.getOrDefault(transaction.getStockCode(), null);
+    if (heldStock == null || heldStock - stockToSell < 0) {
       throw new BadRequestException("You cannot afford this");
     }
     stocks.put(transaction.getStockCode(), heldStock - stockToSell);
@@ -245,8 +293,11 @@ public class TransactionService {
 
   public Transaction cancelBuyLimitTransaction(Transaction transaction) {
     Account account = accountService.getByName(transaction.getUserName());
-    account.setBalance(account.getBalance() + transaction.getCashAmount());
-    accountService.save(account);
+    if (transaction.getStatus().equals(Enums.TransactionStatus.COMMITTED)) {
+      account.setBalance(account.getBalance() + transaction.getCashAmount());
+      accountService.save(account);
+    }
+    transaction.setStatus(Enums.TransactionStatus.CANCELED);
     return transactionRepository.save(transaction);
   }
 }
