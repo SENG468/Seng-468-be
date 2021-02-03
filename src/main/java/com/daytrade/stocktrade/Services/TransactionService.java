@@ -6,6 +6,7 @@ import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Repositories.TransactionRepository;
+import java.util.List;
 import java.util.Map;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -106,34 +107,46 @@ public class TransactionService {
 
   public Transaction getPendingSellTransactions() {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    return transactionRepository
-        .findByUserNameAndTypeAndStatus(
-            userName, Enums.TransactionType.SELL, Enums.TransactionStatus.PENDING)
-        .orElseThrow(EntityMissingException::new);
+    List<Transaction> sellTransactions =
+        transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
+            userName, Enums.TransactionType.SELL, Enums.TransactionStatus.PENDING);
+    if (sellTransactions.size() < 1) {
+      throw new EntityMissingException();
+    }
+    return sellTransactions.get(0);
   }
 
   public Transaction getPendingBuyTransactions() {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    return transactionRepository
-        .findByUserNameAndTypeAndStatus(
-            userName, Enums.TransactionType.BUY, Enums.TransactionStatus.PENDING)
-        .orElseThrow(EntityMissingException::new);
+    List<Transaction> buyTransactions =
+        transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
+            userName, Enums.TransactionType.BUY, Enums.TransactionStatus.PENDING);
+    if (buyTransactions.size() < 1) {
+      throw new EntityMissingException();
+    }
+    return buyTransactions.get(0);
   }
 
   public Transaction getPendingLimitBuyTransactions() {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    return transactionRepository
-        .findByUserNameAndTypeAndStatus(
-            userName, Enums.TransactionType.BUY_AT, Enums.TransactionStatus.PENDING)
-        .orElseThrow(EntityMissingException::new);
+    List<Transaction> buyTransactions =
+        transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
+            userName, Enums.TransactionType.BUY_AT, Enums.TransactionStatus.PENDING);
+    if (buyTransactions.size() < 1) {
+      throw new EntityMissingException();
+    }
+    return buyTransactions.get(0);
   }
 
   public Transaction getPendingLimitSellTransactions() {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    return transactionRepository
-        .findByUserNameAndTypeAndStatus(
-            userName, Enums.TransactionType.SELL_AT, Enums.TransactionStatus.PENDING)
-        .orElseThrow(EntityMissingException::new);
+    List<Transaction> sellTransactions =
+        transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
+            userName, Enums.TransactionType.SELL_AT, Enums.TransactionStatus.PENDING);
+    if (sellTransactions.size() < 1) {
+      throw new EntityMissingException();
+    }
+    return sellTransactions.get(0);
   }
 
   public Account updateAccount(Transaction transaction) {
