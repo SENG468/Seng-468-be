@@ -11,4 +11,10 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
 
   List<Transaction> findByUserNameAndTypeAndStatusOrderByCreatedDate(
       String s, Enums.TransactionType type, Enums.TransactionStatus status);
+
+  List<Transaction> findByUserNameAndTypeAndStatusAndStockCodeOrderByCreatedDate(
+      String userName,
+      Enums.TransactionType sellAt,
+      Enums.TransactionStatus pending,
+      String stockCode);
 }
