@@ -2,6 +2,7 @@ package com.daytrade.stocktrade.Repositories;
 
 import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Transaction;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
@@ -17,4 +18,7 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
       Enums.TransactionType sellAt,
       Enums.TransactionStatus pending,
       String stockCode);
+
+  List<Transaction> findAllByStatusAndCreatedDateBefore(
+      Enums.TransactionStatus status, Instant time);
 }

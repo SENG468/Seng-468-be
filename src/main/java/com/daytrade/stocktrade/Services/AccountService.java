@@ -3,7 +3,9 @@ package com.daytrade.stocktrade.Services;
 import com.daytrade.stocktrade.Models.Account;
 import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
+import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Repositories.AccountRepository;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,15 @@ public class AccountService {
   }
 
   public Account save(Account account) {
+    return accountRepository.save(account);
+  }
+
+  public Account refundStockFromTransaction(Transaction transaction) {
+    Account account = this.getByName(transaction.getUserName());
+    Map<String, Long> stocks = account.getPortfolio();
+    long newStockAmount = stocks.get(transaction.getStockCode()) + transaction.getStockAmount();
+    stocks.put(transaction.getStockCode(), newStockAmount);
+    account.setPortfolio(stocks);
     return accountRepository.save(account);
   }
 }

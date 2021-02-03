@@ -99,7 +99,6 @@ public class TransactionController {
     try {
       Transaction savedTransaction =
           transactionService.getPendingLimitBuyTransactionsByTicker(stockTicker);
-      savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
       return transactionService.cancelBuyLimitTransaction(savedTransaction);
     } catch (EntityMissingException ex) {
       Transaction savedTransaction =
@@ -111,14 +110,12 @@ public class TransactionController {
   @PostMapping("/buy/cancel")
   public Transaction cancelBuyOrder() {
     Transaction transaction = transactionService.getPendingBuyTransactions();
-    transaction.setStatus(Enums.TransactionStatus.CANCELED);
     return transactionService.cancelTransaction(transaction);
   }
 
   @PostMapping("/sell/cancel")
   public Transaction cancelSellOrder() {
     Transaction transaction = transactionService.getPendingSellTransactions();
-    transaction.setStatus(Enums.TransactionStatus.CANCELED);
     return transactionService.cancelTransaction(transaction);
   }
 

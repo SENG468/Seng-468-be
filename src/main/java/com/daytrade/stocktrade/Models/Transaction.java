@@ -7,7 +7,6 @@ import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 @Document(collection = "transactions")
 @Data
@@ -24,7 +23,7 @@ public class Transaction {
 
   private Double cashAmount;
 
-  private String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+  private String userName;
 
   @CreatedDate private Instant createdDate;
 
