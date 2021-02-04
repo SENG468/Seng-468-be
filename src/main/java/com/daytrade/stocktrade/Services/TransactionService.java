@@ -28,32 +28,25 @@ public class TransactionService {
     this.loggerService = loggerService;
   }
 
-  public Double getQuote(String userId, String stockSymbol) {
-    loggerService.createCommandLog(userId, null, Enums.CommandType.QUOTE, stockSymbol, null, null);
+  public Double getQuote(String userId, String stockSymbol, String transId) {
     return 20D;
   }
 
   public Transaction createSimpleBuyTransaction(Transaction transaction) {
-    double quote = getQuote(transaction.getUserName(), transaction.getStockCode());
+    double quote = getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId());
     Account account = accountService.getByName(transaction.getUserName());
 
     if (transaction.getCashAmount() == null) {
+      loggerService.createErrorEventLog(transaction.getUserName(), transaction.getId(), Enums.CommandType.BUY, transaction.getStockCode(), null, null, "Simple Buy - Invalid Request");
       throw new BadRequestException("Invalid Request");
     }
 
     long stockAmount = (long) (transaction.getCashAmount() / quote);
 
     if (stockAmount < 1 || (account.getBalance() < transaction.getCashAmount())) {
+      loggerService.createErrorEventLog(transaction.getUserName(), transaction.getId(), Enums.CommandType.BUY, transaction.getStockCode(), null, account.getBalance(), "Simple Buy - Insufficient Funds");
       throw new BadRequestException("You cannot afford this transaction");
     }
-
-    loggerService.createCommandLog(
-        transaction.getUserName(),
-        null,
-        Enums.CommandType.BUY,
-        transaction.getStockCode(),
-        null,
-        quote * stockAmount);
     return createSimpleTransaction(transaction, quote, stockAmount);
   }
 
@@ -67,7 +60,7 @@ public class TransactionService {
   }
 
   public Transaction createSimpleSellTransaction(Transaction transaction) {
-    double quote = getQuote(transaction.getUserName(), transaction.getStockCode());
+    double quote = getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId());
     Account account = accountService.getByName(transaction.getUserName());
     if (transaction.getCashAmount() == null) {
       throw new BadRequestException("Invalid Request");
@@ -80,28 +73,12 @@ public class TransactionService {
     if (account.getPortfolio().get(transaction.getStockCode()) < stockAmount) {
       throw new BadRequestException("You do not have the stock for this transaction");
     }
-
-    loggerService.createCommandLog(
-        transaction.getUserName(),
-        null,
-        Enums.CommandType.SELL,
-        transaction.getStockCode(),
-        null,
-        quote * stockAmount);
     return createSimpleTransaction(transaction, quote, stockAmount);
   }
 
   // Make sure to change status to committed or filled here
   public Transaction commitSimpleOrder(Transaction transaction) {
     transaction.setStatus(Enums.TransactionStatus.FILLED);
-
-    loggerService.createCommandLog(
-        transaction.getUserName(),
-        null,
-        Enums.CommandType.BUY,
-        transaction.getStockCode(),
-        null,
-        transaction.getCashAmount());
     return transactionRepository.save(transaction);
   }
 
@@ -217,7 +194,6 @@ public class TransactionService {
       }
       stocks.put(transaction.getStockCode(), stockAmount);
       account.setPortfolio(stocks);
-
       // Handle Sell and Sell At orders
     } else if (transaction.getType().equals(Enums.TransactionType.SELL)
         || transaction.getType().equals(Enums.TransactionType.SELL_AT)) {

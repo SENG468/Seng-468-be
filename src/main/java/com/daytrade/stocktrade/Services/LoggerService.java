@@ -115,12 +115,12 @@ public class LoggerService {
    */
   public Logger createCommandLog(
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       Enums.CommandType commandType,
       String stockSymbol,
       String filename,
       Double funds) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 1;
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log =
         createLog(
             Enums.LogType.UserCommandType,
@@ -148,12 +148,12 @@ public class LoggerService {
    */
   public Logger createQuoteServerLog(
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       String stockSymbol,
       Double unitPrice,
       Instant quoteServerTime,
       String cryptoKey) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 1;
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log = new Logger(Enums.LogType.QuoteServerType, finalTransactionNum, "Pfilbert");
     log.setUserName(user);
     log.setStockSymbol(stockSymbol);
@@ -175,8 +175,8 @@ public class LoggerService {
    * @return Saves the newly created log to the logs repo.
    */
   public Logger createAccountTransactionLog(
-      String user, Long transactionNumber, String action, Double funds) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 1;
+      String user, String transactionNumber, String action, Double funds) {
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log = new Logger(Enums.LogType.AccountTransactionType, finalTransactionNum, "Pfilbert");
     log.setUserName(user);
     log.setAction(action);
@@ -199,12 +199,12 @@ public class LoggerService {
    */
   public Logger createSystemEventLog(
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       Enums.CommandType commandType,
       String stockSymbol,
       String filename,
       Double funds) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 1;
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log =
         createLog(
             Enums.LogType.SystemEventType,
@@ -234,13 +234,13 @@ public class LoggerService {
    */
   public Logger createErrorEventLog(
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       Enums.CommandType commandType,
       String stockSymbol,
       String filename,
       Double funds,
       String errorMessage) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 1;
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log =
         createLog(
             Enums.LogType.ErrorEventType,
@@ -270,13 +270,13 @@ public class LoggerService {
    */
   public Logger createDebugLog(
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       Enums.CommandType commandType,
       String stockSymbol,
       String filename,
       Double funds,
       String debugMessage) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 1;
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log =
         createLog(
             Enums.LogType.DebugType,
@@ -293,7 +293,7 @@ public class LoggerService {
   private Logger createLog(
       Enums.LogType logType,
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       Enums.CommandType commandType,
       String stockSymbol,
       String filename,
@@ -374,7 +374,7 @@ public class LoggerService {
   private static void commonElements(Document doc, Element logElem, Logger log, Boolean semiCommon) {
     logElem.appendChild(createLogElement(doc, "timestamp", Long.toString(log.getTimestamp().toEpochMilli())));
     logElem.appendChild(createLogElement(doc, "server", log.getServerName()));
-    logElem.appendChild(createLogElement(doc, "transactionNum", Long.toString(log.getTransactionNumber())));
+    logElem.appendChild(createLogElement(doc, "transactionNum", log.getTransactionNumber()));
     if(semiCommon) {
       logElem.appendChild(createLogElement(doc, "command", log.getCommandType().name()));
       if(log.getUserName() != null) logElem.appendChild(createLogElement(doc, "username", log.getUserName()));

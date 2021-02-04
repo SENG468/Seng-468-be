@@ -14,7 +14,7 @@ public class Logger {
 
   public Logger() {}
 
-  public Logger(Enums.LogType logType, Long transactionNumber, String serverName) {
+  public Logger(Enums.LogType logType, String transactionNumber, String serverName) {
     this.logType = logType;
     this.serverName = serverName;
     this.transactionNumber = transactionNumber;
@@ -26,7 +26,7 @@ public class Logger {
 
   @NotBlank private String serverName;
 
-  @NotNull private Long transactionNumber;
+  @NotNull private String transactionNumber;
 
   private Enums.CommandType commandType;
 

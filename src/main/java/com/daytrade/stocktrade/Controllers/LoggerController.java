@@ -58,7 +58,7 @@ public class LoggerController {
   @PostMapping("/dumplog")
   public ResponseEntity<Resource> getAllLogfile(@Valid @RequestBody LogRequest newLogRequest)
       throws IOException, ParserConfigurationException, TransformerException {
-    newLogRequest.username = newLogRequest.username == "" ? null : newLogRequest.username;
+    newLogRequest.setUsername(newLogRequest.username == "" ? null : newLogRequest.username);
     FileSystemResource resource = loggerService.generateLogFile(newLogRequest);
 
     String formattedFilename = String.format("attachment; filename=%s.xml", newLogRequest.filename);
@@ -75,7 +75,7 @@ public class LoggerController {
   @PostMapping("/user/dumplog")
   public ResponseEntity<Resource> getLogfileForUser(@Valid @RequestBody LogRequest newLogRequest)
       throws IOException, ParserConfigurationException, TransformerException {
-    newLogRequest.username = SecurityContextHolder.getContext().getAuthentication().getName();
+    newLogRequest.setUsername(SecurityContextHolder.getContext().getAuthentication().getName());
     FileSystemResource resource = loggerService.generateLogFile(newLogRequest);
 
     String formattedFilename = String.format("attachment; filename=%s.xml", newLogRequest.filename);
