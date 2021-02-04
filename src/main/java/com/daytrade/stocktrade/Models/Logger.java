@@ -42,7 +42,7 @@ public class Logger {
 
   private Double unitPrice;
 
-  private Long quoteServerTime;
+  private Instant quoteServerTime;
 
   private String cryptoKey;
 

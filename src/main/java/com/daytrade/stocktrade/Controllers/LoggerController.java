@@ -4,6 +4,8 @@ import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Logger;
 import com.daytrade.stocktrade.Services.LoggerService;
 import java.io.IOException;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -52,7 +54,8 @@ public class LoggerController {
   // Returns xml file with all logs
   @GetMapping("/logfile/{filename}")
   public ResponseEntity<Resource> getAllLogfile(
-      @PathVariable(name = "filename", required = true) String filename) throws IOException {
+      @PathVariable(name = "filename", required = true) String filename)
+      throws IOException, ParserConfigurationException, TransformerException {
 
     FileSystemResource resource = loggerService.generateLogFile(null);
 
@@ -71,7 +74,7 @@ public class LoggerController {
   public ResponseEntity<Resource> getLogfileByUser(
       @PathVariable(name = "userId", required = true) String userId,
       @PathVariable(name = "filename", required = true) String filename)
-      throws IOException {
+      throws IOException, ParserConfigurationException, TransformerException {
 
     FileSystemResource resource = loggerService.generateLogFile(userId);
 
@@ -88,7 +91,8 @@ public class LoggerController {
   // Returns xml file of logs relevant to current user
   @GetMapping("/user/logfile/{filename}")
   public ResponseEntity<Resource> getLogfileForUser(
-      @PathVariable(name = "filename", required = true) String filename) throws IOException {
+      @PathVariable(name = "filename", required = true) String filename)
+      throws IOException, ParserConfigurationException, TransformerException {
     String userId = SecurityContextHolder.getContext().getAuthentication().getName();
     FileSystemResource resource = loggerService.generateLogFile(userId);
 
