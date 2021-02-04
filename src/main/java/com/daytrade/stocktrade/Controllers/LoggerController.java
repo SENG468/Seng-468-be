@@ -5,7 +5,6 @@ import com.daytrade.stocktrade.Models.LogRequest;
 import com.daytrade.stocktrade.Models.Logger;
 import com.daytrade.stocktrade.Services.LoggerService;
 import java.io.IOException;
-
 import javax.validation.Valid;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -54,7 +53,8 @@ public class LoggerController {
     return loggerService.getByUserName(name, page);
   }
 
-  // Returns xml file containing all logs if username is null, otherwise returns xml file with specified uesr logs
+  // Returns xml file containing all logs if username is null, otherwise returns xml file with
+  // specified uesr logs
   @PostMapping("/dumplog")
   public ResponseEntity<Resource> getAllLogfile(@Valid @RequestBody LogRequest newLogRequest)
       throws IOException, ParserConfigurationException, TransformerException {

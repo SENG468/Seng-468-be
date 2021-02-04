@@ -33,18 +33,33 @@ public class TransactionService {
   }
 
   public Transaction createSimpleBuyTransaction(Transaction transaction) {
-    double quote = getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId());
+    double quote =
+        getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId());
     Account account = accountService.getByName(transaction.getUserName());
 
     if (transaction.getCashAmount() == null) {
-      loggerService.createErrorEventLog(transaction.getUserName(), transaction.getId(), Enums.CommandType.BUY, transaction.getStockCode(), null, null, "Simple Buy - Invalid Request");
+      loggerService.createErrorEventLog(
+          transaction.getUserName(),
+          transaction.getId(),
+          Enums.CommandType.BUY,
+          transaction.getStockCode(),
+          null,
+          null,
+          "Simple Buy - Invalid Request");
       throw new BadRequestException("Invalid Request");
     }
 
     long stockAmount = (long) (transaction.getCashAmount() / quote);
 
     if (stockAmount < 1 || (account.getBalance() < transaction.getCashAmount())) {
-      loggerService.createErrorEventLog(transaction.getUserName(), transaction.getId(), Enums.CommandType.BUY, transaction.getStockCode(), null, account.getBalance(), "Simple Buy - Insufficient Funds");
+      loggerService.createErrorEventLog(
+          transaction.getUserName(),
+          transaction.getId(),
+          Enums.CommandType.BUY,
+          transaction.getStockCode(),
+          null,
+          account.getBalance(),
+          "Simple Buy - Insufficient Funds");
       throw new BadRequestException("You cannot afford this transaction");
     }
     return createSimpleTransaction(transaction, quote, stockAmount);
@@ -60,7 +75,8 @@ public class TransactionService {
   }
 
   public Transaction createSimpleSellTransaction(Transaction transaction) {
-    double quote = getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId());
+    double quote =
+        getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId());
     Account account = accountService.getByName(transaction.getUserName());
     if (transaction.getCashAmount() == null) {
       throw new BadRequestException("Invalid Request");

@@ -17,7 +17,8 @@ public class AccountsController {
   private final SecurityService securityService;
   private final LoggerService loggerService;
 
-  public AccountsController(AccountService accountService, SecurityService securityService, LoggerService loggerService) {
+  public AccountsController(
+      AccountService accountService, SecurityService securityService, LoggerService loggerService) {
     this.accountService = accountService;
     this.securityService = securityService;
     this.loggerService = loggerService;
@@ -32,7 +33,13 @@ public class AccountsController {
 
   @PostMapping("/add")
   public Account addFundsToAccount(@Valid @RequestBody Account account) {
-    loggerService.createCommandLog(account.getName(), account.getId(), Enums.CommandType.ADD, null, null, account.getBalance());
+    loggerService.createCommandLog(
+        account.getName(),
+        account.getId(),
+        Enums.CommandType.ADD,
+        null,
+        null,
+        account.getBalance());
     return accountService.addFundsToAccount(account);
   }
 }
