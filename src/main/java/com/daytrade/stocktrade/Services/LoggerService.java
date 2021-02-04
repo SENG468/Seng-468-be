@@ -1,6 +1,7 @@
 package com.daytrade.stocktrade.Services;
 
 import com.daytrade.stocktrade.Models.Enums;
+import com.daytrade.stocktrade.Models.LogRequest;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Logger;
 import com.daytrade.stocktrade.Repositories.LoggerRepository;
@@ -61,10 +62,11 @@ public class LoggerService {
     return results;
   }
 
-  public FileSystemResource generateLogFile(String username)
+  public FileSystemResource generateLogFile(LogRequest request)
       throws ParserConfigurationException, TransformerException {
-    List<Logger> results = getLogs(username);
-    String logname = username == null ? "src/logfiles/logs.xml" : "src/logfiles/" + username + "-logs.xml";
+    createCommandLog(request.username, request.id, Enums.CommandType.DUMPLOG , null, request.filename, null);
+    List<Logger> results = getLogs(request.username);
+    String logname = request.username == null ? "src/logfiles/logs.xml" : "src/logfiles/" + request.username + "-logs.xml";
 
     ListIterator<Logger> resultIterator = results.listIterator();
 
@@ -75,9 +77,14 @@ public class LoggerService {
 
     doc.appendChild(root);
 
-    while (resultIterator.hasNext()) {
-      root.appendChild(createLogElement(doc, resultIterator.next()));
+    try {
+      while (resultIterator.hasNext()) {
+        root.appendChild(createLogElement(doc, resultIterator.next()));
+      }
+    } catch (Exception e) {
+      throw new EntityMissingException();
     }
+
 
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
     Transformer transf = transformerFactory.newTransformer();
@@ -314,7 +321,7 @@ public class LoggerService {
       }
       results = content;
     } catch (Exception e) {
-      System.out.println(e);
+      throw new EntityMissingException();
     }
     return results;
   }
@@ -359,8 +366,7 @@ public class LoggerService {
       default:
         logElem = doc.createElement("errorEvent");
         commonElements(doc, logElem, log, true);
-        if(log.getMessage() != null) logElem.appendChild(createLogElement(doc, "errorMessage", "Logging Error"));
-        // Throw invalid log error
+        if(log.getMessage() != null) logElem.appendChild(createLogElement(doc, "errorMessage", "Logging Error - Invalid Log Type"));
     }
     return logElem;
   }
