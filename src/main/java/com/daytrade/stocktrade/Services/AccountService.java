@@ -28,7 +28,7 @@ public class AccountService {
     Account account = accountRepository.findByName(name).orElseThrow(EntityMissingException::new);
     account.setBalance(account.getBalance() + request.getBalance());
 
-    loggerService.createAccountTransactionLog(name, 1L, "add", request.getBalance());
+    loggerService.createAccountTransactionLog(name, request.getId(), "add", request.getBalance());
     account.setName(name);
     return accountRepository.save(account);
   }
