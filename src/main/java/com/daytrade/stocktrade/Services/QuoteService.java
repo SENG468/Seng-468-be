@@ -7,6 +7,9 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import com.daytrade.stocktrade.Models.Enums;
+import com.daytrade.stocktrade.Models.Quote;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,31 +18,35 @@ public class QuoteService {
 
     private final LoggerService loggerService;
 
-    @Autowired
+    
     public QuoteService(LoggerService loggerService){
         this.loggerService = loggerService;
     }
 
-    Socket qsSocket = null;
-    PrintWriter out = null;
-    BufferedReader in = null;
+    private final Socket qsSocket = null;
+    private final PrintWriter out = null;
+    private final BufferedReader in = null;
 
-    public Double quote(String userid,String stockSymbol) throws Exception {
+    public Quote quote(String userid, String stockSymbol, String transactionNumber) throws Exception {
         try {
             qsSocket = new Socket("quoteserver.seng.uvic.ca", 4442);
             out = new PrintWriter(qsSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(qsSocket.getInputStream()));
         } catch (UnknownHostException e) {
-            System.err.println("Don't know about host: quoteserve.seng.uvic.ca");
+            loggerService.createErrorEventLog(userid, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, null, "UnknownHostException");
         } catch (IOException e) {
-            System.err.println("Couldn't get I/O for the connection Project Quote Server likely down");
+            loggerService.createErrorEventLog(userid, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, null, "IOException");
+        }
+          catch (Exception e){
+            loggerService.createErrorEventLog(userid, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, null, "Exception");
         }
 
         String fromServer;
         
         fromServer = in.readLine();
-
+        
         System.out.print(fromServer);
+        //TODO: remove message in final revision
 
         out.close();
         in.close();
@@ -47,20 +54,22 @@ public class QuoteService {
 
         String[] serverResponse = fromServer.split(",");
 
-        Double quote = parseQuoteToDouble(serverResponse[0]);
+        Double quoteValue = parseQuoteToDouble(serverResponse[0]);
 
         Long timestamp = parseTimetoLong(serverResponse[3]);
 
         String cryptokey = serverResponse[4];
 
         //serverReponse is returned as "quote, symbol, userid, timestamp, cryptokey"
-        loggerService.createQuoteServerLog(userid, null, stockSymbol, quote, timestamp, cryptokey);
+        loggerService.createQuoteServerLog(userid, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
+
+        Quote quote = new Quote(userid, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
 
         return quote;
     }
 
     private Double parseQuoteToDouble(String quote){
-        double unitPrice = Double.parseDouble(quote);
+        Double unitPrice = Double.parseDouble(quote);
         return unitPrice;
     }
 

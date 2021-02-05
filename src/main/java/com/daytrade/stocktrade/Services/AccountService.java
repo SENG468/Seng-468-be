@@ -1,6 +1,7 @@
 package com.daytrade.stocktrade.Services;
 
 import com.daytrade.stocktrade.Models.Account;
+import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Repositories.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,13 @@ public class AccountService {
 
   public Account addFundsToAccount(Account request) throws EntityMissingException {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
+    if (request.getBalance() < 0) {
+      throw new BadRequestException("You cannot add negative money to an account");
+    }
     Account account = accountRepository.findByName(name).orElseThrow(EntityMissingException::new);
     account.setBalance(account.getBalance() + request.getBalance());
 
-    loggerService.createAccountTransactionLog(name, 1L, "add", request.getBalance());
+    loggerService.createAccountTransactionLog(name, request.getId(), "add", request.getBalance());
     account.setName(name);
     return accountRepository.save(account);
   }

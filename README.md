@@ -5,13 +5,13 @@
 ## Running the Application
 
 1. Add all the environmental variables. Contact a dev team member for these values
-2.
+3. Run the application
 
-A) Run the Jar java -jar build/libs/stocktrade-1.0.jar
+    A) Run the Jar java -jar build/libs/stocktrade-1.0.jar
 
-Or
+    Or
 
-B) Run the application from the main file with intellij
+    B) Run the application from the main file with intellij
 3. The application will now be running on port 8080 with context path /stock-trade
 
 ---
@@ -21,8 +21,9 @@ B) Run the application from the main file with intellij
 To build and run the docker container
 
 1. `./gradlew bootJar` This builds the jar that will be put into the docker
+2.  Export the MONGO_URI and JWT_SECRET environment variables the values can be gotten from the dev team
 2. `docker build -t stocktrade .` This creates the container image. Must be run from the `Seng-468-be/` directory
-3. `docker run -p {hostPort}:8080 stocktrade` The app can then be access at the host port
+3. `docker run -e MONGO_URI -e JWT_SECRET -p {hostPort}:8080 stocktrade` The app can then be access at the host port
 4. ^C (Ctrl. C) to end the program
 
 ---

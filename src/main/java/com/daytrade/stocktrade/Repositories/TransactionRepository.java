@@ -2,13 +2,19 @@ package com.daytrade.stocktrade.Repositories;
 
 import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Transaction;
-import java.util.Optional;
+import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TransactionRepository extends MongoRepository<Transaction, String> {
 
-  Optional<Transaction> findByUserNameAndTypeAndStatus(
+  List<Transaction> findByUserNameAndTypeAndStatusOrderByCreatedDate(
       String s, Enums.TransactionType type, Enums.TransactionStatus status);
+
+  List<Transaction> findByUserNameAndTypeAndStatusAndStockCodeOrderByCreatedDate(
+      String userName,
+      Enums.TransactionType sellAt,
+      Enums.TransactionStatus pending,
+      String stockCode);
 }
