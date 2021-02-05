@@ -160,7 +160,6 @@ public class TransactionController {
     try {
       Transaction savedTransaction =
           transactionService.getPendingLimitBuyTransactionsByTicker(stockTicker);
-      savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
       loggerService.createCommandLog(
           savedTransaction.getUserName(),
           savedTransaction.getId(),
@@ -187,7 +186,6 @@ public class TransactionController {
   @PostMapping("/buy/cancel")
   public Transaction cancelBuyOrder() {
     Transaction transaction = transactionService.getPendingBuyTransactions();
-    transaction.setStatus(Enums.TransactionStatus.CANCELED);
     loggerService.createCommandLog(
         transaction.getUserName(),
         transaction.getId(),
@@ -201,7 +199,6 @@ public class TransactionController {
   @PostMapping("/sell/cancel")
   public Transaction cancelSellOrder() {
     Transaction transaction = transactionService.getPendingSellTransactions();
-    transaction.setStatus(Enums.TransactionStatus.CANCELED);
     loggerService.createCommandLog(
         transaction.getUserName(),
         transaction.getId(),

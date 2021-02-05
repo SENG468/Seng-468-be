@@ -6,6 +6,8 @@ import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Repositories.TransactionRepository;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +35,7 @@ public class TransactionService {
   }
 
   public Transaction createSimpleBuyTransaction(Transaction transaction) {
+    transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
     double quote =
         getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId());
     Account account = accountService.getByName(transaction.getUserName());
@@ -96,6 +99,30 @@ public class TransactionService {
   public Transaction commitSimpleOrder(Transaction transaction) {
     transaction.setStatus(Enums.TransactionStatus.FILLED);
     return transactionRepository.save(transaction);
+  }
+
+  public void expireOrders() {
+    // Get All transactions created but not confirmed more than a minute ago
+    List<Transaction> expiredTransactions =
+        transactionRepository.findAllByStatusAndCreatedDateBefore(
+            Enums.TransactionStatus.PENDING, Instant.now().minus(1, ChronoUnit.MINUTES));
+    for (Transaction transaction : expiredTransactions) {
+      // Cancel Simple transactions. No refunds needed
+      if (transaction.getType().equals(Enums.TransactionType.BUY)
+          || transaction.getType().equals(Enums.TransactionType.SELL)) {
+        transaction.setStatus(Enums.TransactionStatus.EXPIRED);
+      } else if (transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
+        // Only committed buy limit orders have refunds needed
+        // So no refund needed
+        transaction.setStatus(Enums.TransactionStatus.EXPIRED);
+      } else if (transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
+        // Sell limits remove stock from account
+        // Refund Stock on order cancel
+        accountService.refundStockFromTransaction(transaction);
+        transaction.setStatus(Enums.TransactionStatus.EXPIRED);
+      }
+    }
+    transactionRepository.saveAll(expiredTransactions);
   }
 
   public Transaction getPendingSellTransactions() {
@@ -226,10 +253,12 @@ public class TransactionService {
   }
 
   public Transaction cancelTransaction(Transaction transaction) {
+    transaction.setStatus(Enums.TransactionStatus.CANCELED);
     return transactionRepository.save(transaction);
   }
 
   public Transaction createLimitTransaction(Transaction transaction) {
+    transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
     transaction.setStatus(Enums.TransactionStatus.PENDING);
     if (transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
       // Remove the stock from the portfolio while the order is active
@@ -274,12 +303,8 @@ public class TransactionService {
   }
 
   public Transaction cancelSellLimitTransaction(Transaction transaction) {
-    Account account = accountService.getByName(transaction.getUserName());
-    Map<String, Long> stocks = account.getPortfolio();
-    long newStockAmount = stocks.get(transaction.getStockCode()) + transaction.getStockAmount();
-    stocks.put(transaction.getStockCode(), newStockAmount);
-    account.setPortfolio(stocks);
-    accountService.save(account);
+    accountService.refundStockFromTransaction(transaction);
+    transaction.setStatus(Enums.TransactionStatus.CANCELED);
     return transactionRepository.save(transaction);
   }
 
@@ -290,6 +315,10 @@ public class TransactionService {
       accountService.save(account);
     }
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
+    return transactionRepository.save(transaction);
+  }
+
+  public Transaction save(Transaction transaction) {
     return transactionRepository.save(transaction);
   }
 }
