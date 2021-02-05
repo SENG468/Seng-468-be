@@ -50,17 +50,13 @@ public class TransactionController {
           transaction.getType().equals(Enums.TransactionType.SELL)
               ? Enums.CommandType.SELL
               : Enums.CommandType.BUY;
-      loggerService.createCommandLog(
-          transaction.getUserName(),
-          transaction.getId(),
-          cmdType,
-          transaction.getStockCode(),
-          null,
-          transaction.getCashAmount());
+      loggerService.createTransactionCommandLog(transaction, cmdType, null);
       return transaction.getType().equals(Enums.TransactionType.BUY)
           ? transactionService.createSimpleBuyTransaction(transaction)
           : transactionService.createSimpleSellTransaction(transaction);
     } else {
+      loggerService.createTransactionErrorLog(
+          transaction, Enums.CommandType.BUY, "Incorrect transaction type");
       throw new BadRequestException("Not correct transaction type");
     }
   }
@@ -74,15 +70,11 @@ public class TransactionController {
           transaction.getType().equals(Enums.TransactionType.SELL_AT)
               ? Enums.CommandType.SET_SELL_AMOUNT
               : Enums.CommandType.SET_BUY_AMOUNT;
-      loggerService.createCommandLog(
-          newTransaction.getUserName(),
-          newTransaction.getId(),
-          cmdType,
-          newTransaction.getStockCode(),
-          null,
-          newTransaction.getCashAmount());
+      loggerService.createTransactionCommandLog(newTransaction, cmdType, null);
       return newTransaction;
     } else {
+      loggerService.createTransactionErrorLog(
+          transaction, Enums.CommandType.SET_BUY_AMOUNT, "Incorrect transaction type");
       throw new BadRequestException("Not correct transaction type");
     }
   }
@@ -93,15 +85,12 @@ public class TransactionController {
       Transaction savedTransaction = transactionService.getPendingLimitBuyTransactions();
       Transaction updatedTransaction =
           transactionService.triggerLimitTransaction(savedTransaction, newTransaction);
-      loggerService.createCommandLog(
-          updatedTransaction.getUserName(),
-          updatedTransaction.getId(),
-          Enums.CommandType.SET_BUY_TRIGGER,
-          updatedTransaction.getStockCode(),
-          null,
-          updatedTransaction.getCashAmount());
+      loggerService.createTransactionCommandLog(
+          savedTransaction, Enums.CommandType.SET_BUY_TRIGGER, null);
       return updatedTransaction;
     } else {
+      loggerService.createTransactionErrorLog(
+          newTransaction, Enums.CommandType.SET_BUY_TRIGGER, "Incorrect transaction type");
       throw new BadRequestException("Not correct transaction type");
     }
   }
@@ -112,15 +101,12 @@ public class TransactionController {
       Transaction savedTransaction = transactionService.getPendingLimitSellTransactions();
       Transaction updatedTransaction =
           transactionService.triggerLimitTransaction(savedTransaction, newTransaction);
-      loggerService.createCommandLog(
-          updatedTransaction.getUserName(),
-          updatedTransaction.getId(),
-          Enums.CommandType.SET_SELL_TRIGGER,
-          updatedTransaction.getStockCode(),
-          null,
-          updatedTransaction.getCashAmount());
+      loggerService.createTransactionCommandLog(
+          savedTransaction, Enums.CommandType.SET_SELL_TRIGGER, null);
       return updatedTransaction;
     } else {
+      loggerService.createTransactionErrorLog(
+          newTransaction, Enums.CommandType.SET_SELL_TRIGGER, "Incorrect transaction type");
       throw new BadRequestException("Not correct transaction type");
     }
   }
@@ -131,26 +117,15 @@ public class TransactionController {
       Transaction savedTransaction =
           transactionService.getPendingLimitSellTransactionsByTicker(stockTicker);
       savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
-      loggerService.createCommandLog(
-          savedTransaction.getUserName(),
-          savedTransaction.getId(),
-          Enums.CommandType.CANCEL_SET_SELL,
-          stockTicker,
-          null,
-          savedTransaction.getCashAmount());
+      loggerService.createTransactionCommandLog(
+          savedTransaction, Enums.CommandType.CANCEL_SET_SELL, stockTicker);
       return transactionService.cancelSellLimitTransaction(savedTransaction);
     } catch (EntityMissingException ex) {
       Transaction savedTransaction =
           transactionService.getCommittedLimitSellTransactionsByTicker(stockTicker);
       savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
-      loggerService.createErrorEventLog(
-          savedTransaction.getUserName(),
-          savedTransaction.getId(),
-          Enums.CommandType.CANCEL_SET_SELL,
-          stockTicker,
-          null,
-          savedTransaction.getCashAmount(),
-          "Missing Entity");
+      loggerService.createTransactionErrorLog(
+          savedTransaction, Enums.CommandType.CANCEL_SET_SELL, "Missing Entity");
       return transactionService.cancelSellLimitTransaction(savedTransaction);
     }
   }
@@ -161,25 +136,14 @@ public class TransactionController {
       Transaction savedTransaction =
           transactionService.getPendingLimitBuyTransactionsByTicker(stockTicker);
       savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
-      loggerService.createCommandLog(
-          savedTransaction.getUserName(),
-          savedTransaction.getId(),
-          Enums.CommandType.CANCEL_SET_BUY,
-          stockTicker,
-          null,
-          savedTransaction.getCashAmount());
+      loggerService.createTransactionCommandLog(
+          savedTransaction, Enums.CommandType.CANCEL_SET_BUY, stockTicker);
       return transactionService.cancelBuyLimitTransaction(savedTransaction);
     } catch (EntityMissingException ex) {
       Transaction savedTransaction =
           transactionService.getCommittedLimitBuyTransactionsByTicker(stockTicker);
-      loggerService.createErrorEventLog(
-          savedTransaction.getUserName(),
-          savedTransaction.getId(),
-          Enums.CommandType.CANCEL_SET_BUY,
-          stockTicker,
-          null,
-          savedTransaction.getCashAmount(),
-          "Missing Entity");
+      loggerService.createTransactionErrorLog(
+          savedTransaction, Enums.CommandType.CANCEL_SET_BUY, "Missing Entity");
       return transactionService.cancelBuyLimitTransaction(savedTransaction);
     }
   }
@@ -188,13 +152,7 @@ public class TransactionController {
   public Transaction cancelBuyOrder() {
     Transaction transaction = transactionService.getPendingBuyTransactions();
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
-    loggerService.createCommandLog(
-        transaction.getUserName(),
-        transaction.getId(),
-        Enums.CommandType.CANCEL_BUY,
-        transaction.getStockCode(),
-        null,
-        transaction.getCashAmount());
+    loggerService.createTransactionCommandLog(transaction, Enums.CommandType.CANCEL_BUY, null);
     return transactionService.cancelTransaction(transaction);
   }
 
@@ -202,13 +160,7 @@ public class TransactionController {
   public Transaction cancelSellOrder() {
     Transaction transaction = transactionService.getPendingSellTransactions();
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
-    loggerService.createCommandLog(
-        transaction.getUserName(),
-        transaction.getId(),
-        Enums.CommandType.CANCEL_SELL,
-        transaction.getStockCode(),
-        null,
-        transaction.getCashAmount());
+    loggerService.createTransactionCommandLog(transaction, Enums.CommandType.CANCEL_SELL, null);
     return transactionService.cancelTransaction(transaction);
   }
 
@@ -217,13 +169,7 @@ public class TransactionController {
     Transaction transaction = transactionService.getPendingSellTransactions();
     transaction = transactionService.commitSimpleOrder(transaction);
     transactionService.updateAccount(transaction);
-    loggerService.createCommandLog(
-        transaction.getUserName(),
-        transaction.getId(),
-        Enums.CommandType.COMMIT_SELL,
-        transaction.getStockCode(),
-        null,
-        transaction.getCashAmount());
+    loggerService.createTransactionCommandLog(transaction, Enums.CommandType.COMMIT_SELL, null);
     return transaction;
   }
 
@@ -231,13 +177,7 @@ public class TransactionController {
   public Account commitSimpleBuyOrder() {
     Transaction transaction = transactionService.getPendingBuyTransactions();
     transaction = transactionService.commitSimpleOrder(transaction);
-    loggerService.createCommandLog(
-        transaction.getUserName(),
-        transaction.getId(),
-        Enums.CommandType.COMMIT_BUY,
-        transaction.getStockCode(),
-        null,
-        transaction.getCashAmount());
+    loggerService.createTransactionCommandLog(transaction, Enums.CommandType.COMMIT_BUY, null);
     return transactionService.updateAccount(transaction);
   }
 }
