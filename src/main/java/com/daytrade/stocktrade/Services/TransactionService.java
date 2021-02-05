@@ -2,6 +2,7 @@ package com.daytrade.stocktrade.Services;
 
 import com.daytrade.stocktrade.Models.Account;
 import com.daytrade.stocktrade.Models.Enums;
+import com.daytrade.stocktrade.Models.Quote;
 import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Transaction;
@@ -32,7 +33,9 @@ public class TransactionService {
   }
 
   public Double getQuote(String userId, String stockSymbol, String transId) {
-    return 20D;
+    Quote quote = quoteService.quote(userid, stockSymbol, transId);
+    Double unitPrice = quote.getUnitPrice();
+    return unitPrice;
   }
 
   public Transaction createSimpleBuyTransaction(Transaction transaction) {
