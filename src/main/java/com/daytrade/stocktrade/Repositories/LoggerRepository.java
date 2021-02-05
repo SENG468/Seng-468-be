@@ -9,7 +9,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LoggerRepository extends MongoRepository<Logger, String> {
-  Page<Logger> findAll(Pageable pageable);
-
   Optional<Page<Logger>> findByUserName(String username, Pageable pageable);
 }

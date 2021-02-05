@@ -1,11 +1,21 @@
 package com.daytrade.stocktrade.Controllers;
 
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
+import com.daytrade.stocktrade.Models.LogRequest;
 import com.daytrade.stocktrade.Models.Logger;
 import com.daytrade.stocktrade.Services.LoggerService;
+import java.io.IOException;
+import javax.validation.Valid;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,5 +51,40 @@ public class LoggerController {
       throws EntityMissingException {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     return loggerService.getByUserName(name, page);
+  }
+
+  // Returns xml file containing all logs if username is null, otherwise returns xml file with
+  // specified uesr logs
+  @PostMapping("/dumplog")
+  public ResponseEntity<Resource> getAllLogfile(@Valid @RequestBody LogRequest newLogRequest)
+      throws IOException, ParserConfigurationException, TransformerException {
+    newLogRequest.setUsername(newLogRequest.username == "" ? null : newLogRequest.username);
+    FileSystemResource resource = loggerService.generateLogFile(newLogRequest);
+
+    String formattedFilename = String.format("attachment; filename=%s.xml", newLogRequest.filename);
+    HttpHeaders headers = new HttpHeaders();
+    headers.add(HttpHeaders.CONTENT_DISPOSITION, formattedFilename);
+
+    return ResponseEntity.ok()
+        .headers(headers)
+        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+        .body(resource);
+  }
+
+  // Returns xml file of logs relevant to current user based off jwt
+  @PostMapping("/user/dumplog")
+  public ResponseEntity<Resource> getLogfileForUser(@Valid @RequestBody LogRequest newLogRequest)
+      throws IOException, ParserConfigurationException, TransformerException {
+    newLogRequest.setUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+    FileSystemResource resource = loggerService.generateLogFile(newLogRequest);
+
+    String formattedFilename = String.format("attachment; filename=%s.xml", newLogRequest.filename);
+    HttpHeaders headers = new HttpHeaders();
+    headers.add(HttpHeaders.CONTENT_DISPOSITION, formattedFilename);
+
+    return ResponseEntity.ok()
+        .headers(headers)
+        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+        .body(resource);
   }
 }

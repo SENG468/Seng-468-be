@@ -2,12 +2,32 @@ package com.daytrade.stocktrade.Services;
 
 import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
+import com.daytrade.stocktrade.Models.LogRequest;
 import com.daytrade.stocktrade.Models.Logger;
 import com.daytrade.stocktrade.Repositories.LoggerRepository;
+import java.io.File;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 @Service
 public class LoggerService {
@@ -22,7 +42,7 @@ public class LoggerService {
    * Returns all logs recorded during system run.
    *
    * @param pageSize
-   * @return Page object containing all logs (up to page size)
+   * @return Page object containing all logs (up to page size)F
    */
   public Page<Logger> getAllLogs(Pageable page) {
     return loggerRepository.findAll(page);
@@ -41,6 +61,48 @@ public class LoggerService {
     return results;
   }
 
+  public FileSystemResource generateLogFile(LogRequest request)
+      throws ParserConfigurationException, TransformerException {
+    createCommandLog(
+        request.username, request.id, Enums.CommandType.DUMPLOG, null, request.filename, null);
+    List<Logger> results = getLogs(request.username);
+    String logname =
+        request.username == null
+            ? "src/logfiles/logs.xml"
+            : "src/logfiles/" + request.username + "-logs.xml";
+
+    ListIterator<Logger> resultIterator = results.listIterator();
+
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    Document doc = builder.newDocument();
+    Element root = doc.createElement("log");
+
+    doc.appendChild(root);
+
+    try {
+      while (resultIterator.hasNext()) {
+        root.appendChild(createLogElement(doc, resultIterator.next()));
+      }
+    } catch (Exception e) {
+      throw new EntityMissingException();
+    }
+
+    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    Transformer transf = transformerFactory.newTransformer();
+
+    DOMSource source = new DOMSource(doc);
+    File myFile = new File(logname);
+    StreamResult file = new StreamResult(myFile);
+
+    transf.setOutputProperty(OutputKeys.INDENT, "yes");
+    transf.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+    transf.transform(source, file);
+
+    FileSystemResource resource = new FileSystemResource(logname);
+    return resource;
+  }
+
   /**
    * User commands come from the user command files or from manual entries in the students' web
    * forms. Some params may not be needed depending on commands, use "null" for those.
@@ -55,12 +117,12 @@ public class LoggerService {
    */
   public Logger createCommandLog(
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       Enums.CommandType commandType,
       String stockSymbol,
       String filename,
       Double funds) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 0;
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log =
         createLog(
             Enums.LogType.UserCommandType,
@@ -88,12 +150,12 @@ public class LoggerService {
    */
   public Logger createQuoteServerLog(
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       String stockSymbol,
       Double unitPrice,
-      Long quoteServerTime,
+      Instant quoteServerTime,
       String cryptoKey) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 0;
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log = new Logger(Enums.LogType.QuoteServerType, finalTransactionNum, "Pfilbert");
     log.setUserName(user);
     log.setStockSymbol(stockSymbol);
@@ -115,8 +177,8 @@ public class LoggerService {
    * @return Saves the newly created log to the logs repo.
    */
   public Logger createAccountTransactionLog(
-      String user, Long transactionNumber, String action, Double funds) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 0;
+      String user, String transactionNumber, String action, Double funds) {
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log = new Logger(Enums.LogType.AccountTransactionType, finalTransactionNum, "Pfilbert");
     log.setUserName(user);
     log.setAction(action);
@@ -139,12 +201,12 @@ public class LoggerService {
    */
   public Logger createSystemEventLog(
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       Enums.CommandType commandType,
       String stockSymbol,
       String filename,
       Double funds) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 0;
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log =
         createLog(
             Enums.LogType.SystemEventType,
@@ -174,13 +236,13 @@ public class LoggerService {
    */
   public Logger createErrorEventLog(
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       Enums.CommandType commandType,
       String stockSymbol,
       String filename,
       Double funds,
       String errorMessage) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 0;
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log =
         createLog(
             Enums.LogType.ErrorEventType,
@@ -210,13 +272,13 @@ public class LoggerService {
    */
   public Logger createDebugLog(
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       Enums.CommandType commandType,
       String stockSymbol,
       String filename,
       Double funds,
       String debugMessage) {
-    long finalTransactionNum = transactionNumber != null ? transactionNumber : 0;
+    String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
     Logger log =
         createLog(
             Enums.LogType.DebugType,
@@ -233,7 +295,7 @@ public class LoggerService {
   private Logger createLog(
       Enums.LogType logType,
       String user,
-      Long transactionNumber,
+      String transactionNumber,
       Enums.CommandType commandType,
       String stockSymbol,
       String filename,
@@ -247,5 +309,110 @@ public class LoggerService {
     if (funds != null) log.setFunds(funds);
     if (message != null) log.setMessage(message);
     return log;
+  }
+
+  private List<Logger> getLogs(String username) {
+    List<Logger> results = new ArrayList<Logger>();
+    try {
+      Page<Logger> logs =
+          username == null
+              ? loggerRepository.findAll(PageRequest.of(0, 5000))
+              : loggerRepository
+                  .findByUserName(username, PageRequest.of(0, 5000))
+                  .orElseThrow(EntityMissingException::new);
+      List<Logger> content = new ArrayList<Logger>(logs.getContent());
+      while (logs.hasNext()) {
+        Page<Logger> nextLogs =
+            username == null
+                ? loggerRepository.findAll(logs.nextPageable())
+                : loggerRepository
+                    .findByUserName(username, logs.nextPageable())
+                    .orElseThrow(EntityMissingException::new);
+        content.addAll(nextLogs.getContent());
+        logs = nextLogs;
+      }
+      results = content;
+    } catch (Exception e) {
+      throw new EntityMissingException();
+    }
+    return results;
+  }
+
+  private static Node createLogElement(Document doc, Logger log) {
+    Element logElem;
+    switch (log.getLogType()) {
+      case UserCommandType:
+        logElem = doc.createElement("userCommand");
+        commonElements(doc, logElem, log, true);
+        break;
+      case QuoteServerType:
+        logElem = doc.createElement("quoteServer");
+        commonElements(doc, logElem, log, false);
+        logElem.appendChild(createLogElement(doc, "price", Double.toString(log.getUnitPrice())));
+        logElem.appendChild(createLogElement(doc, "username", log.getUserName()));
+        logElem.appendChild(createLogElement(doc, "stockSymbol", log.getStockSymbol()));
+        logElem.appendChild(
+            createLogElement(
+                doc, "quoteServerTime", Long.toString(log.getQuoteServerTime().toEpochMilli())));
+        logElem.appendChild(createLogElement(doc, "cryptokey", log.getCryptoKey()));
+        break;
+      case AccountTransactionType:
+        logElem = doc.createElement("accountTransaction");
+        commonElements(doc, logElem, log, false);
+        logElem.appendChild(createLogElement(doc, "action", log.getAction()));
+        logElem.appendChild(createLogElement(doc, "username", log.getUserName()));
+        logElem.appendChild(createLogElement(doc, "funds", Double.toString(log.getFunds())));
+        break;
+      case SystemEventType:
+        logElem = doc.createElement("systemEvent");
+        commonElements(doc, logElem, log, true);
+        break;
+      case ErrorEventType:
+        logElem = doc.createElement("errorEvent");
+        commonElements(doc, logElem, log, true);
+        if (log.getMessage() != null)
+          logElem.appendChild(createLogElement(doc, "errorMessage", log.getMessage()));
+        break;
+      case DebugType:
+        logElem = doc.createElement("debugEvent");
+        commonElements(doc, logElem, log, true);
+        if (log.getMessage() != null)
+          logElem.appendChild(createLogElement(doc, "debugMessage", log.getMessage()));
+        break;
+      default:
+        logElem = doc.createElement("errorEvent");
+        commonElements(doc, logElem, log, true);
+        if (log.getMessage() != null)
+          logElem.appendChild(
+              createLogElement(doc, "errorMessage", "Logging Error - Invalid Log Type"));
+    }
+    return logElem;
+  }
+
+  private static void commonElements(
+      Document doc, Element logElem, Logger log, Boolean semiCommon) {
+    logElem.appendChild(
+        createLogElement(doc, "timestamp", Long.toString(log.getTimestamp().toEpochMilli())));
+    logElem.appendChild(createLogElement(doc, "server", log.getServerName()));
+    logElem.appendChild(createLogElement(doc, "transactionNum", log.getTransactionNumber()));
+    if (semiCommon) {
+      logElem.appendChild(createLogElement(doc, "command", log.getCommandType().name()));
+      if (log.getUserName() != null)
+        logElem.appendChild(createLogElement(doc, "username", log.getUserName()));
+      if (log.getStockSymbol() != null)
+        logElem.appendChild(createLogElement(doc, "stockSymbol", log.getStockSymbol()));
+      if (log.getFileName() != null)
+        logElem.appendChild(createLogElement(doc, "filename", log.getFileName()));
+      if (log.getFunds() != null)
+        logElem.appendChild(createLogElement(doc, "funds", Double.toString(log.getFunds())));
+    }
+  }
+
+  private static Node createLogElement(Document doc, String name, String value) {
+
+    Element node = doc.createElement(name);
+    node.appendChild(doc.createTextNode(value));
+
+    return node;
   }
 }
