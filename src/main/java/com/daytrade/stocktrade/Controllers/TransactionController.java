@@ -86,7 +86,7 @@ public class TransactionController {
       Transaction updatedTransaction =
           transactionService.triggerLimitTransaction(savedTransaction, newTransaction);
       loggerService.createTransactionCommandLog(
-          savedTransaction, Enums.CommandType.SET_BUY_TRIGGER, null);
+          updatedTransaction, Enums.CommandType.SET_BUY_TRIGGER, null);
       return updatedTransaction;
     } else {
       loggerService.createTransactionErrorLog(
@@ -102,7 +102,7 @@ public class TransactionController {
       Transaction updatedTransaction =
           transactionService.triggerLimitTransaction(savedTransaction, newTransaction);
       loggerService.createTransactionCommandLog(
-          savedTransaction, Enums.CommandType.SET_SELL_TRIGGER, null);
+          updatedTransaction, Enums.CommandType.SET_SELL_TRIGGER, null);
       return updatedTransaction;
     } else {
       loggerService.createTransactionErrorLog(
