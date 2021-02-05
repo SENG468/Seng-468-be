@@ -1,18 +1,34 @@
 package com.daytrade.stocktrade.Models;
 
+import java.time.Instant;
 import lombok.Data;
 
 @Data
 public class Quote {
-    private String id;
+  public Quote(
+      String id,
+      String transactionNumber,
+      String stockSymbol,
+      Double unitPrice,
+      Instant timestamp,
+      String cryptokey) {
+    this.id = id;
+    this.transactionNumber = transactionNumber;
+    this.stockSymbol = stockSymbol;
+    this.unitPrice = unitPrice;
+    this.timestamp = timestamp;
+    this.cryptoKey = cryptokey;
+  }
 
-    private String transactionNumber;
+  private String id;
 
-    private String stockSymbol;
+  private String transactionNumber;
 
-    private Double unitPrice;
+  private String stockSymbol;
 
-    private Long quoteServerTime;
+  private Double unitPrice;
 
-    private String cryptoKey;
+  private Instant timestamp;
+
+  private String cryptoKey;
 }

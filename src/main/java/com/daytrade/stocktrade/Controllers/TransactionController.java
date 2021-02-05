@@ -43,7 +43,8 @@ public class TransactionController {
   }
 
   @PostMapping("/order/simple")
-  public Transaction createSimpleOrder(@Valid @RequestBody Transaction transaction) throws Exception {
+  public Transaction createSimpleOrder(@Valid @RequestBody Transaction transaction)
+      throws Exception {
     if (transaction.getType().equals(Enums.TransactionType.SELL)
         || transaction.getType().equals(Enums.TransactionType.BUY)) {
       Enums.CommandType cmdType =
