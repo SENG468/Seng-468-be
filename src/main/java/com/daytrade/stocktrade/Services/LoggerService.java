@@ -4,6 +4,7 @@ import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.LogRequest;
 import com.daytrade.stocktrade.Models.Logger;
+import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Repositories.LoggerRepository;
 import java.io.File;
 import java.time.Instant;
@@ -101,6 +102,31 @@ public class LoggerService {
 
     FileSystemResource resource = new FileSystemResource(logname);
     return resource;
+  }
+
+  /** Wrapper for createErrorEventLog */
+  public Logger createTransactionErrorLog(
+      Transaction transaction, Enums.CommandType cmdType, String message) {
+    return createErrorEventLog(
+        transaction.getUserName(),
+        transaction.getId(),
+        cmdType,
+        transaction.getStockCode(),
+        null,
+        null,
+        message);
+  }
+
+  /** Wrapper for createCommandLog */
+  public Logger createTransactionCommandLog(
+      Transaction transaction, Enums.CommandType cmdType, String stockSymbol) {
+    return createCommandLog(
+        transaction.getUserName(),
+        transaction.getId(),
+        cmdType,
+        stockSymbol == null ? transaction.getStockCode() : stockSymbol,
+        null,
+        transaction.getCashAmount());
   }
 
   /**
@@ -348,7 +374,8 @@ public class LoggerService {
       case QuoteServerType:
         logElem = doc.createElement("quoteServer");
         commonElements(doc, logElem, log, false);
-        logElem.appendChild(createLogElement(doc, "price", Double.toString(log.getUnitPrice())));
+        logElem.appendChild(
+            createLogElement(doc, "price", String.format("%.2f", log.getUnitPrice())));
         logElem.appendChild(createLogElement(doc, "username", log.getUserName()));
         logElem.appendChild(createLogElement(doc, "stockSymbol", log.getStockSymbol()));
         logElem.appendChild(
@@ -361,7 +388,7 @@ public class LoggerService {
         commonElements(doc, logElem, log, false);
         logElem.appendChild(createLogElement(doc, "action", log.getAction()));
         logElem.appendChild(createLogElement(doc, "username", log.getUserName()));
-        logElem.appendChild(createLogElement(doc, "funds", Double.toString(log.getFunds())));
+        logElem.appendChild(createLogElement(doc, "funds", String.format("%.2f", log.getFunds())));
         break;
       case SystemEventType:
         logElem = doc.createElement("systemEvent");
@@ -404,7 +431,7 @@ public class LoggerService {
       if (log.getFileName() != null)
         logElem.appendChild(createLogElement(doc, "filename", log.getFileName()));
       if (log.getFunds() != null)
-        logElem.appendChild(createLogElement(doc, "funds", Double.toString(log.getFunds())));
+        logElem.appendChild(createLogElement(doc, "funds", String.format("%.2f", log.getFunds())));
     }
   }
 
