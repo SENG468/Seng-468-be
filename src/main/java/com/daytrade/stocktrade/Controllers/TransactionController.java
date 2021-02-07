@@ -33,7 +33,7 @@ public class TransactionController {
   }
 
   @GetMapping("/quote/{stockSym}")
-  public Map<String, Double> getQuote(@PathVariable("stockSym") String stockSym) {
+  public Map<String, Double> getQuote(@PathVariable("stockSym") String stockSym) throws Exception {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     Map<String, Double> out = new HashMap<>();
     Double quote = transactionService.getQuote(name, stockSym, "9999"); // Need cmd id here
@@ -43,7 +43,8 @@ public class TransactionController {
   }
 
   @PostMapping("/order/simple")
-  public Transaction createSimpleOrder(@Valid @RequestBody Transaction transaction) {
+  public Transaction createSimpleOrder(@Valid @RequestBody Transaction transaction)
+      throws Exception {
     if (transaction.getType().equals(Enums.TransactionType.SELL)
         || transaction.getType().equals(Enums.TransactionType.BUY)) {
       Enums.CommandType cmdType =
