@@ -4,7 +4,6 @@ import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.LogRequest;
 import com.daytrade.stocktrade.Models.Logger;
 import com.daytrade.stocktrade.Services.LoggerService;
-import java.io.IOException;
 import javax.validation.Valid;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -57,8 +56,8 @@ public class LoggerController {
   // specified uesr logs
   @PostMapping("/dumplog")
   public ResponseEntity<Resource> getAllLogfile(@Valid @RequestBody LogRequest newLogRequest)
-      throws IOException, ParserConfigurationException, TransformerException {
-    newLogRequest.setUsername(newLogRequest.username == "" ? null : newLogRequest.username);
+      throws ParserConfigurationException, TransformerException {
+    newLogRequest.setUsername(newLogRequest.username.equals("") ? null : newLogRequest.username);
     FileSystemResource resource = loggerService.generateLogFile(newLogRequest);
 
     String formattedFilename = String.format("attachment; filename=%s.xml", newLogRequest.filename);
@@ -74,7 +73,7 @@ public class LoggerController {
   // Returns xml file of logs relevant to current user based off jwt
   @PostMapping("/user/dumplog")
   public ResponseEntity<Resource> getLogfileForUser(@Valid @RequestBody LogRequest newLogRequest)
-      throws IOException, ParserConfigurationException, TransformerException {
+      throws ParserConfigurationException, TransformerException {
     newLogRequest.setUsername(SecurityContextHolder.getContext().getAuthentication().getName());
     FileSystemResource resource = loggerService.generateLogFile(newLogRequest);
 
