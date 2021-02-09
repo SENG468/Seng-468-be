@@ -21,7 +21,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-  private AuthenticationManager authenticationManager;
+  private final AuthenticationManager authenticationManager;
   private final ObjectMapper objectMapper;
 
   public JWTAuthenticationFilter(AuthenticationManager authenticationManager) {

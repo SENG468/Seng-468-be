@@ -24,7 +24,7 @@ public class QuoteService {
   private PrintWriter out = null;
   private BufferedReader in = null;
 
-  public Quote quote(String userid, String stockSymbol, String transactionNumber) throws Exception {
+  public Quote quote(String userid, String stockSymbol, String transactionNumber) {
     try {
       qsSocket = new Socket("quoteserver.seng.uvic.ca", 4442);
       out = new PrintWriter(qsSocket.getOutputStream(), true);
@@ -52,16 +52,27 @@ public class QuoteService {
           userid, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, null, "Exception");
     }
 
-    String fromServer;
+    String fromServer = "";
 
-    fromServer = in.readLine();
+    try {
+      fromServer = in.readLine();
 
-    System.out.print(fromServer);
-    // TODO: remove message in final revision
+      System.out.print(fromServer);
+      // TODO: remove message in final revision
 
-    out.close();
-    in.close();
-    qsSocket.close();
+      out.close();
+      in.close();
+      qsSocket.close();
+    } catch (IOException ex) {
+      loggerService.createErrorEventLog(
+          userid,
+          transactionNumber,
+          Enums.CommandType.QUOTE,
+          stockSymbol,
+          null,
+          null,
+          "IO exception: " + ex.getMessage());
+    }
 
     // serverReponse is returned as "quote, symbol, userid, timestamp, cryptokey"
     String[] serverResponse = fromServer.split(",");
@@ -77,19 +88,14 @@ public class QuoteService {
     loggerService.createQuoteServerLog(
         userid, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
 
-    Quote quote =
-        new Quote(userid, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
-
-    return quote;
+    return new Quote(userid, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
   }
 
   private Double parseQuoteToDouble(String quote) {
-    Double unitPrice = Double.parseDouble(quote);
-    return unitPrice;
+    return Double.parseDouble(quote);
   }
 
   private Long parseTimetoLong(String time) {
-    Long timestamp = Long.parseLong(time);
-    return timestamp;
+    return Long.parseLong(time);
   }
 }

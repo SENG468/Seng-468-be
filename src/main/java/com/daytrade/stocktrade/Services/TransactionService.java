@@ -2,9 +2,9 @@ package com.daytrade.stocktrade.Services;
 
 import com.daytrade.stocktrade.Models.Account;
 import com.daytrade.stocktrade.Models.Enums;
-import com.daytrade.stocktrade.Models.Quote;
 import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
+import com.daytrade.stocktrade.Models.Quote;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Repositories.TransactionRepository;
 import java.time.Instant;
@@ -34,16 +34,15 @@ public class TransactionService {
     this.quoteService = quoteService;
   }
 
-  public Double getQuote(String userId, String stockSymbol, String transId) {
-    Quote quote = quoteService.quote(userid, stockSymbol, transId);
-    Double unitPrice = quote.getUnitPrice();
-    return unitPrice;
+  public Quote getQuote(String userId, String stockSymbol, String transId) {
+    return quoteService.quote(userId, stockSymbol, transId);
   }
 
   public Transaction createSimpleBuyTransaction(Transaction transaction) {
     transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
     double quote =
-        getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId());
+        getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId())
+            .getUnitPrice();
     Account account = accountService.getByName(transaction.getUserName());
 
     if (transaction.getCashAmount() == null) {
@@ -73,7 +72,8 @@ public class TransactionService {
 
   public Transaction createSimpleSellTransaction(Transaction transaction) {
     double quote =
-        getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId());
+        getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId())
+            .getUnitPrice();
     Account account = accountService.getByName(transaction.getUserName());
     if (transaction.getCashAmount() == null) {
       loggerService.createTransactionErrorLog(
@@ -222,6 +222,7 @@ public class TransactionService {
     // Handel Buy and Buy At orders
     if (transaction.getType().equals(Enums.TransactionType.BUY)
         || transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
+
       // Remove Money from account if buy order
       if (!transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
         account.setBalance(
@@ -229,7 +230,6 @@ public class TransactionService {
         loggerService.createAccountTransactionLog(
             transaction.getUserName(), transaction.getId(), "remove", account.getBalance());
       }
-
       // Update portfolio with new stock counts
       long stockAmount;
       if (stocks.containsKey(transaction.getStockCode())) {
@@ -239,6 +239,7 @@ public class TransactionService {
       }
       stocks.put(transaction.getStockCode(), stockAmount);
       account.setPortfolio(stocks);
+
       // Handle Sell and Sell At orders
     } else if (transaction.getType().equals(Enums.TransactionType.SELL)
         || transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
@@ -332,5 +333,51 @@ public class TransactionService {
 
   public Transaction save(Transaction transaction) {
     return transactionRepository.save(transaction);
+  }
+
+  public void fillSellLimitOrders() {
+    List<Transaction> orders =
+        transactionRepository.findAllByStatusAndType(
+            Enums.TransactionStatus.COMMITTED, Enums.TransactionType.SELL_AT);
+    for (Transaction order : orders) {
+      Quote quote = getQuote(order.getUserName(), order.getStockCode(), order.getId());
+      if (quote.getUnitPrice() >= order.getUnitPrice()) {
+        order.setStatus(Enums.TransactionStatus.FILLED);
+        // Set the unit price to the quote price if its higher
+        order.setUnitPrice(quote.getUnitPrice());
+        updateAccount(order);
+      }
+    }
+  }
+
+  public void fillBuyLimitOrders() {
+    List<Transaction> orders =
+        transactionRepository.findAllByStatusAndType(
+            Enums.TransactionStatus.COMMITTED, Enums.TransactionType.BUY_AT);
+    for (Transaction order : orders) {
+      Quote quote = getQuote(order.getUserName(), order.getStockCode(), order.getId());
+      if (quote.getUnitPrice() <= order.getUnitPrice()) {
+        order.setStatus(Enums.TransactionStatus.FILLED);
+
+        // This is adding a double save to the account
+        // Change me later
+        // Might also be removed depending on whether you buy at new quote or always trigger
+        if (quote.getUnitPrice() < order.getUnitPrice()) {
+          // Set the unit price to the quote price if its lower
+          order.setUnitPrice(quote.getUnitPrice());
+          refundForLowerBuyPrice(order);
+        }
+
+        updateAccount(order);
+      }
+    }
+  }
+
+  private Account refundForLowerBuyPrice(Transaction order) {
+    double newBuyPrice = order.getUnitPrice() * order.getStockAmount();
+    double refund = order.getCashAmount() - newBuyPrice;
+    Account account = accountService.getByName(order.getUserName());
+    account.setBalance(account.getBalance() + refund);
+    return accountService.save(account);
   }
 }

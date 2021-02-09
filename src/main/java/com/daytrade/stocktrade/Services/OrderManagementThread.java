@@ -9,14 +9,11 @@ import org.springframework.stereotype.Service;
 @EnableScheduling
 public class OrderManagementThread {
 
-  private final AccountService accountService;
-
   private final TransactionService transactionService;
 
   @Autowired
   public OrderManagementThread(
       AccountService accountService, TransactionService transactionService) {
-    this.accountService = accountService;
     this.transactionService = transactionService;
   }
 
@@ -28,9 +25,13 @@ public class OrderManagementThread {
 
   // Check if any of the limit sell orders can be filled
   @Scheduled(fixedDelay = 60000)
-  public void fillSellLimitOrders() {}
+  public void fillSellLimitOrders() {
+    transactionService.fillSellLimitOrders();
+  }
 
   // Check if any of the limit buy orders can be filled
   @Scheduled(fixedDelay = 60000)
-  public void fillBuyLimitOrders() {}
+  public void fillBuyLimitOrders() {
+    transactionService.fillBuyLimitOrders();
+  }
 }

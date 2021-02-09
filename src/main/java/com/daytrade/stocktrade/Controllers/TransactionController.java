@@ -6,7 +6,6 @@ import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Services.LoggerService;
-import com.daytrade.stocktrade.Services.SecurityService;
 import com.daytrade.stocktrade.Services.TransactionService;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,23 +19,19 @@ public class TransactionController {
 
   private final TransactionService transactionService;
   private final LoggerService loggerService;
-  private final SecurityService securityService;
 
   @Autowired
-  public TransactionController(
-      TransactionService transactionService,
-      SecurityService securityService,
-      LoggerService loggerService) {
+  public TransactionController(TransactionService transactionService, LoggerService loggerService) {
     this.transactionService = transactionService;
     this.loggerService = loggerService;
-    this.securityService = securityService;
   }
 
   @GetMapping("/quote/{stockSym}")
-  public Map<String, Double> getQuote(@PathVariable("stockSym") String stockSym) throws Exception {
+  public Map<String, Double> getQuote(@PathVariable("stockSym") String stockSym) {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     Map<String, Double> out = new HashMap<>();
-    Double quote = transactionService.getQuote(name, stockSym, "9999"); // Need cmd id here
+    Double quote =
+        transactionService.getQuote(name, stockSym, "9999").getUnitPrice(); // Need cmd id here
     loggerService.createCommandLog(name, "temp", Enums.CommandType.QUOTE, stockSym, null, quote);
     out.put(stockSym, quote);
     return out;

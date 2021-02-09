@@ -338,7 +338,7 @@ public class LoggerService {
   }
 
   private List<Logger> getLogs(String username) {
-    List<Logger> results = new ArrayList<Logger>();
+    List<Logger> results = new ArrayList<>();
     try {
       Page<Logger> logs =
           username == null
@@ -346,7 +346,7 @@ public class LoggerService {
               : loggerRepository
                   .findByUserName(username, PageRequest.of(0, 5000))
                   .orElseThrow(EntityMissingException::new);
-      List<Logger> content = new ArrayList<Logger>(logs.getContent());
+      List<Logger> content = new ArrayList<>(logs.getContent());
       while (logs.hasNext()) {
         Page<Logger> nextLogs =
             username == null
