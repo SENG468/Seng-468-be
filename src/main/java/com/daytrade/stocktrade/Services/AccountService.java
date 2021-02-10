@@ -41,6 +41,12 @@ public class AccountService {
     Account account = accountRepository.findByName(name).orElseThrow(EntityMissingException::new);
     account.setBalance(account.getBalance() + request.getBalance());
 
+    Transaction transaction = new Transaction();
+    transaction.setCashAmount(request.getBalance());
+    transaction.setType(Enums.TransactionType.ADD_FUNDS);
+    transaction.setStatus(Enums.TransactionStatus.FILLED);
+    transactionRepository.save(transaction);
+
     loggerService.createAccountTransactionLog(name, request.getId(), "add", request.getBalance());
     account.setName(name);
     return accountRepository.save(account);
@@ -69,8 +75,8 @@ public class AccountService {
 
   public Summary generateSummary(String username) throws EntityMissingException {
     Account summaryAccount = getByName(username);
-    List<Enums.TransactionStatus> status = new ArrayList<Enums.TransactionStatus>();
-    List<Enums.TransactionType> type = new ArrayList<Enums.TransactionType>();
+    List<Enums.TransactionStatus> status = new ArrayList<>();
+    List<Enums.TransactionType> type = new ArrayList<>();
     status.add(Enums.TransactionStatus.PENDING);
     type.addAll(Arrays.asList(Enums.TransactionType.BUY_AT, Enums.TransactionType.SELL_AT));
     List<Transaction> pendingTriggers =

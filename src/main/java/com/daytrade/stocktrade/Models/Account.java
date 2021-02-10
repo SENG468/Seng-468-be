@@ -24,5 +24,7 @@ public class Account {
   @Indexed(unique = true)
   private String name;
 
+  private String transactionId;
+
   private Map<String, Long> portfolio = new HashMap<>();
 }
