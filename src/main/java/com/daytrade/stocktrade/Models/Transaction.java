@@ -27,7 +27,7 @@ public class Transaction {
 
   @CreatedDate private Instant createdDate;
 
-  private Long transactionId;
+  private String transactionId;
 
   private Double unitPrice;
 }
