@@ -3,10 +3,12 @@ package com.daytrade.stocktrade.Controllers;
 import com.daytrade.stocktrade.Models.Account;
 import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
+import com.daytrade.stocktrade.Models.Summary;
 import com.daytrade.stocktrade.Services.AccountService;
 import com.daytrade.stocktrade.Services.LoggerService;
 import com.daytrade.stocktrade.Services.SecurityService;
 import javax.validation.Valid;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,6 +31,15 @@ public class AccountsController {
       throws EntityMissingException {
     String name = securityService.getUserFromJwt(authorization);
     return accountService.getByName(name);
+  }
+
+  @GetMapping("/displaySummary")
+  public Summary generateNewSummary(@RequestParam(name = "id") String transactionId)
+      throws EntityMissingException {
+    String name = SecurityContextHolder.getContext().getAuthentication().getName();
+    loggerService.createCommandLog(
+        name, transactionId, Enums.CommandType.DISPLAY_SUMMARY, null, null, null);
+    return accountService.generateSummary(name);
   }
 
   @PostMapping("/add")
