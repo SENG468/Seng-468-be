@@ -14,7 +14,8 @@ public class Enums {
     BUY,
     SELL,
     BUY_AT,
-    SELL_AT
+    SELL_AT,
+    ADD_FUNDS
   }
 
   public enum CommandType {

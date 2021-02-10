@@ -1,10 +1,12 @@
 package com.daytrade.stocktrade.Services;
 
 import com.daytrade.stocktrade.Models.Account;
+import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Repositories.AccountRepository;
+import com.daytrade.stocktrade.Repositories.TransactionRepository;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,11 +17,16 @@ public class AccountService {
 
   private final AccountRepository accountRepository;
   private final LoggerService loggerService;
+  private final TransactionRepository transactionRepository;
 
   @Autowired
-  public AccountService(AccountRepository accountRepository, LoggerService loggerService) {
+  public AccountService(
+      AccountRepository accountRepository,
+      LoggerService loggerService,
+      TransactionRepository transactionRepository) {
     this.accountRepository = accountRepository;
     this.loggerService = loggerService;
+    this.transactionRepository = transactionRepository;
   }
 
   public Account addFundsToAccount(Account request) throws EntityMissingException {
@@ -29,6 +36,12 @@ public class AccountService {
     }
     Account account = accountRepository.findByName(name).orElseThrow(EntityMissingException::new);
     account.setBalance(account.getBalance() + request.getBalance());
+
+    Transaction transaction = new Transaction();
+    transaction.setCashAmount(request.getBalance());
+    transaction.setType(Enums.TransactionType.ADD_FUNDS);
+    transaction.setStatus(Enums.TransactionStatus.FILLED);
+    transactionRepository.save(transaction);
 
     loggerService.createAccountTransactionLog(name, request.getId(), "add", request.getBalance());
     account.setName(name);
