@@ -41,7 +41,10 @@ public class TransactionService {
   public Transaction createSimpleBuyTransaction(Transaction transaction) {
     transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
     double quote =
-        getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId())
+        getQuote(
+                transaction.getUserName(),
+                transaction.getStockCode(),
+                transaction.getTransactionId())
             .getUnitPrice();
     Account account = accountService.getByName(transaction.getUserName());
 
@@ -72,7 +75,10 @@ public class TransactionService {
 
   public Transaction createSimpleSellTransaction(Transaction transaction) {
     double quote =
-        getQuote(transaction.getUserName(), transaction.getStockCode(), transaction.getId())
+        getQuote(
+                transaction.getUserName(),
+                transaction.getStockCode(),
+                transaction.getTransactionId())
             .getUnitPrice();
     Account account = accountService.getByName(transaction.getUserName());
     if (transaction.getCashAmount() == null) {
@@ -111,15 +117,23 @@ public class TransactionService {
       if (transaction.getType().equals(Enums.TransactionType.BUY)
           || transaction.getType().equals(Enums.TransactionType.SELL)) {
         transaction.setStatus(Enums.TransactionStatus.EXPIRED);
+        Enums.CommandType cmdType =
+            transaction.getType().equals(Enums.TransactionType.BUY)
+                ? Enums.CommandType.CANCEL_BUY
+                : Enums.CommandType.CANCEL_SELL;
+        loggerService.createTransactionSysEventLog(transaction, cmdType, null);
       } else if (transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
         // Only committed buy limit orders have refunds needed
         // So no refund needed
         transaction.setStatus(Enums.TransactionStatus.EXPIRED);
+        loggerService.createTransactionSysEventLog(transaction, Enums.CommandType.CANCEL_BUY, null);
       } else if (transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
         // Sell limits remove stock from account
         // Refund Stock on order cancel
         accountService.refundStockFromTransaction(transaction);
         transaction.setStatus(Enums.TransactionStatus.EXPIRED);
+        loggerService.createTransactionSysEventLog(
+            transaction, Enums.CommandType.CANCEL_SELL, null);
       }
     }
     transactionRepository.saveAll(expiredTransactions);
@@ -228,7 +242,10 @@ public class TransactionService {
         account.setBalance(
             account.getBalance() - transaction.getUnitPrice() * transaction.getStockAmount());
         loggerService.createAccountTransactionLog(
-            transaction.getUserName(), transaction.getId(), "remove", account.getBalance());
+            transaction.getUserName(),
+            transaction.getTransactionId(),
+            "remove",
+            account.getBalance());
       }
       // Update portfolio with new stock counts
       long stockAmount;
@@ -252,7 +269,7 @@ public class TransactionService {
           account.getBalance() + transaction.getUnitPrice() * transaction.getStockAmount();
       account.setBalance(newMoney);
       loggerService.createAccountTransactionLog(
-          transaction.getUserName(), transaction.getId(), "add", account.getBalance());
+          transaction.getUserName(), transaction.getTransactionId(), "add", account.getBalance());
     }
     return accountService.save(account);
   }
@@ -309,7 +326,7 @@ public class TransactionService {
     }
     account.setBalance(account.getBalance() - cashAmount);
     loggerService.createAccountTransactionLog(
-        transaction.getUserName(), transaction.getId(), "remove", account.getBalance());
+        transaction.getUserName(), transaction.getTransactionId(), "remove", account.getBalance());
     return accountService.save(account);
   }
 
@@ -324,7 +341,7 @@ public class TransactionService {
     if (transaction.getStatus().equals(Enums.TransactionStatus.COMMITTED)) {
       account.setBalance(account.getBalance() + transaction.getCashAmount());
       loggerService.createAccountTransactionLog(
-          transaction.getUserName(), transaction.getId(), "add", account.getBalance());
+          transaction.getUserName(), transaction.getTransactionId(), "add", account.getBalance());
       accountService.save(account);
     }
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
@@ -340,12 +357,13 @@ public class TransactionService {
         transactionRepository.findAllByStatusAndType(
             Enums.TransactionStatus.COMMITTED, Enums.TransactionType.SELL_AT);
     for (Transaction order : orders) {
-      Quote quote = getQuote(order.getUserName(), order.getStockCode(), order.getId());
+      Quote quote = getQuote(order.getUserName(), order.getStockCode(), order.getTransactionId());
       if (quote.getUnitPrice() >= order.getUnitPrice()) {
         order.setStatus(Enums.TransactionStatus.FILLED);
         // Set the unit price to the quote price if its higher
         order.setUnitPrice(quote.getUnitPrice());
         updateAccount(order);
+        loggerService.createTransactionSysEventLog(order, Enums.CommandType.COMMIT_SELL, null);
       }
     }
   }
@@ -355,7 +373,7 @@ public class TransactionService {
         transactionRepository.findAllByStatusAndType(
             Enums.TransactionStatus.COMMITTED, Enums.TransactionType.BUY_AT);
     for (Transaction order : orders) {
-      Quote quote = getQuote(order.getUserName(), order.getStockCode(), order.getId());
+      Quote quote = getQuote(order.getUserName(), order.getStockCode(), order.getTransactionId());
       if (quote.getUnitPrice() <= order.getUnitPrice()) {
         order.setStatus(Enums.TransactionStatus.FILLED);
 
@@ -367,8 +385,8 @@ public class TransactionService {
           order.setUnitPrice(quote.getUnitPrice());
           refundForLowerBuyPrice(order);
         }
-
         updateAccount(order);
+        loggerService.createTransactionSysEventLog(order, Enums.CommandType.COMMIT_BUY, null);
       }
     }
   }
@@ -378,6 +396,8 @@ public class TransactionService {
     double refund = order.getCashAmount() - newBuyPrice;
     Account account = accountService.getByName(order.getUserName());
     account.setBalance(account.getBalance() + refund);
+    loggerService.createAccountTransactionLog(
+        order.getUserName(), order.getTransactionId(), "add", account.getBalance());
     return accountService.save(account);
   }
 }

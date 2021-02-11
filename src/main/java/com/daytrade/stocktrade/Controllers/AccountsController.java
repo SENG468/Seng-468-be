@@ -34,7 +34,7 @@ public class AccountsController {
   }
 
   @GetMapping("/displaySummary")
-  public Summary generateNewSummary(@RequestParam(name = "id") String transactionId)
+  public Summary generateNewSummary(@RequestParam(name = "transactionId") String transactionId)
       throws EntityMissingException {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     loggerService.createCommandLog(
@@ -46,7 +46,7 @@ public class AccountsController {
   public Account addFundsToAccount(@Valid @RequestBody Account account) {
     loggerService.createCommandLog(
         account.getName(),
-        account.getId(),
+        account.getTransactionId(),
         Enums.CommandType.ADD,
         null,
         null,

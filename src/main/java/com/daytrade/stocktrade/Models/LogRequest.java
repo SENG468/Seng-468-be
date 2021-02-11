@@ -6,5 +6,5 @@ import lombok.Data;
 public class LogRequest {
   public String username;
   public String filename;
-  public String id;
+  public String transactionId;
 }
