@@ -47,7 +47,8 @@ public class AccountService {
     transaction.setStatus(Enums.TransactionStatus.FILLED);
     transactionRepository.save(transaction);
 
-    loggerService.createAccountTransactionLog(name, request.getId(), "add", request.getBalance());
+    loggerService.createAccountTransactionLog(
+        name, request.getTransactionId(), "add", request.getBalance());
     account.setName(name);
     return accountRepository.save(account);
   }

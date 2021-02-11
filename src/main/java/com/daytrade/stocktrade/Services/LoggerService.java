@@ -65,12 +65,17 @@ public class LoggerService {
   public FileSystemResource generateLogFile(LogRequest request)
       throws ParserConfigurationException, TransformerException {
     createCommandLog(
-        request.username, request.id, Enums.CommandType.DUMPLOG, null, request.filename, null);
-    List<Logger> results = getLogs(request.username);
+        request.getUsername(),
+        request.getTransactionId(),
+        Enums.CommandType.DUMPLOG,
+        null,
+        request.getFilename(),
+        null);
+    List<Logger> results = getLogs(request.getUsername());
     String logname =
-        request.username == null
+        request.getUsername() == null
             ? "src/logfiles/logs.xml"
-            : "src/logfiles/" + request.username + "-logs.xml";
+            : "src/logfiles/" + request.getUsername() + "-logs.xml";
 
     ListIterator<Logger> resultIterator = results.listIterator();
 
@@ -109,7 +114,7 @@ public class LoggerService {
       Transaction transaction, Enums.CommandType cmdType, String message) {
     return createErrorEventLog(
         transaction.getUserName(),
-        transaction.getId(),
+        transaction.getTransactionId(),
         cmdType,
         transaction.getStockCode(),
         null,
@@ -122,7 +127,7 @@ public class LoggerService {
       Transaction transaction, Enums.CommandType cmdType, String stockSymbol) {
     return createCommandLog(
         transaction.getUserName(),
-        transaction.getId(),
+        transaction.getTransactionId(),
         cmdType,
         stockSymbol == null ? transaction.getStockCode() : stockSymbol,
         null,
@@ -134,7 +139,7 @@ public class LoggerService {
       Transaction transaction, Enums.CommandType cmdType, String stockSymbol) {
     return createSystemEventLog(
         transaction.getUserName(),
-        transaction.getId(),
+        transaction.getTransactionId(),
         cmdType,
         stockSymbol == null ? transaction.getStockCode() : stockSymbol,
         null,
