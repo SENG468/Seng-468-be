@@ -129,6 +129,18 @@ public class LoggerService {
         transaction.getCashAmount());
   }
 
+    /** Wrapper for createSystemEventLog */
+  public Logger createTransactionSysEventLog(
+      Transaction transaction, Enums.CommandType cmdType, String stockSymbol) {
+    return createSystemEventLog(
+        transaction.getUserName(),
+        transaction.getId(),
+        cmdType,
+        stockSymbol == null ? transaction.getStockCode() : stockSymbol,
+        null,
+        transaction.getCashAmount());
+  }
+
   /**
    * User commands come from the user command files or from manual entries in the students' web
    * forms. Some params may not be needed depending on commands, use "null" for those.
