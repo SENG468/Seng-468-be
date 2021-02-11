@@ -111,7 +111,10 @@ public class TransactionService {
       if (transaction.getType().equals(Enums.TransactionType.BUY)
           || transaction.getType().equals(Enums.TransactionType.SELL)) {
         transaction.setStatus(Enums.TransactionStatus.EXPIRED);
-        Enums.CommandType cmdType = transaction.getType().equals(Enums.TransactionType.BUY) ? Enums.CommandType.CANCEL_BUY : Enums.CommandType.CANCEL_SELL;
+        Enums.CommandType cmdType =
+            transaction.getType().equals(Enums.TransactionType.BUY)
+                ? Enums.CommandType.CANCEL_BUY
+                : Enums.CommandType.CANCEL_SELL;
         loggerService.createTransactionSysEventLog(transaction, cmdType, null);
       } else if (transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
         // Only committed buy limit orders have refunds needed
@@ -123,7 +126,8 @@ public class TransactionService {
         // Refund Stock on order cancel
         accountService.refundStockFromTransaction(transaction);
         transaction.setStatus(Enums.TransactionStatus.EXPIRED);
-        loggerService.createTransactionSysEventLog(transaction, Enums.CommandType.CANCEL_SELL, null);
+        loggerService.createTransactionSysEventLog(
+            transaction, Enums.CommandType.CANCEL_SELL, null);
       }
     }
     transactionRepository.saveAll(expiredTransactions);
@@ -384,7 +388,7 @@ public class TransactionService {
     Account account = accountService.getByName(order.getUserName());
     account.setBalance(account.getBalance() + refund);
     loggerService.createAccountTransactionLog(
-      order.getUserName(), order.getId(), "add", account.getBalance());
+        order.getUserName(), order.getId(), "add", account.getBalance());
     return accountService.save(account);
   }
 }

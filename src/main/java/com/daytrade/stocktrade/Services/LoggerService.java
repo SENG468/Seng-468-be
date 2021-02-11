@@ -129,7 +129,7 @@ public class LoggerService {
         transaction.getCashAmount());
   }
 
-    /** Wrapper for createSystemEventLog */
+  /** Wrapper for createSystemEventLog */
   public Logger createTransactionSysEventLog(
       Transaction transaction, Enums.CommandType cmdType, String stockSymbol) {
     return createSystemEventLog(
