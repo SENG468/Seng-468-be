@@ -6,6 +6,7 @@ import com.daytrade.stocktrade.Models.LogRequest;
 import com.daytrade.stocktrade.Models.Logger;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Repositories.LoggerRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -296,6 +297,10 @@ public class LoggerService {
             filename,
             funds,
             errorMessage);
+    try {
+      System.out.print(new ObjectMapper().writeValueAsString(log));
+    } catch (Exception ex) {
+    }
     return loggerRepository.save(log);
   }
 
