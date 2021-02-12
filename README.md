@@ -15,6 +15,10 @@
 3. The application will now be running on port 8080 with context path /stock-trade
 
 ---
+## Running the Application on the VM
+1. `docker run -p 27017:27017 mongo`
+2. `./runOnVm.sh`
+---
 
 ## Docker
 

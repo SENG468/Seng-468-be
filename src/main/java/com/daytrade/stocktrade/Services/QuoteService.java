@@ -26,7 +26,7 @@ public class QuoteService {
 
   public Quote quote(String userid, String stockSymbol, String transactionNumber) {
     try {
-      qsSocket = new Socket("quoteserver.seng.uvic.ca", 4442);
+      qsSocket = new Socket("192.168.4.2", 4442);
       out = new PrintWriter(qsSocket.getOutputStream(), true);
       in = new BufferedReader(new InputStreamReader(qsSocket.getInputStream()));
     } catch (UnknownHostException e) {
@@ -55,6 +55,8 @@ public class QuoteService {
     String fromServer = "";
 
     try {
+      System.out.println("Connectd");
+      this.out.println("QUOTE," + userid + "," + stockSymbol);
       fromServer = in.readLine();
 
       System.out.print(fromServer);
