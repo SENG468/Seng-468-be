@@ -1,0 +1,17 @@
+server:
+  error:
+    include-stacktrace: never
+  servlet:
+    context-path: /stock-trade
+  port: 8080
+
+spring:
+  data:
+    mongodb:
+      auto-index-creation: true
+      uri: mongodb://127.0.0.1:27017/seng468
+
+security:
+  #  One day in MS
+  expiry-ms: 86400000
+  secret: ${JWT_SECRET}
