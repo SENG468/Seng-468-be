@@ -2,8 +2,10 @@ package com.daytrade.stocktrade.Models;
 
 import java.time.Instant;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class Quote {
   public Quote(
       String id,
