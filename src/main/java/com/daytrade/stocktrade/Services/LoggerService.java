@@ -7,7 +7,8 @@ import com.daytrade.stocktrade.Models.Logger;
 import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Repositories.LoggerRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,11 +23,11 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -63,7 +64,7 @@ public class LoggerService {
     return results;
   }
 
-  public FileSystemResource generateLogFile(LogRequest request)
+  public StreamingResponseBody generateLogFile(LogRequest request)
       throws ParserConfigurationException, TransformerException {
     createCommandLog(
         request.getUsername(),
@@ -73,11 +74,6 @@ public class LoggerService {
         request.getFilename(),
         null);
     List<Logger> results = getLogs(request.getUsername());
-    String logname =
-        request.getUsername() == null
-            ? "src/logfiles/logs.xml"
-            : "src/logfiles/" + request.getUsername() + "-logs.xml";
-
     ListIterator<Logger> resultIterator = results.listIterator();
 
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -95,19 +91,30 @@ public class LoggerService {
       throw new EntityMissingException();
     }
 
-    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    Transformer transf = transformerFactory.newTransformer();
+    return new StreamingResponseBody() {
+      @Override
+      public void writeTo(OutputStream out) throws IOException {
+        try {
+          Transformer transformer = TransformerFactory.newInstance().newTransformer();
+          transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+          transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 
-    DOMSource source = new DOMSource(doc);
-    File myFile = new File(logname);
-    StreamResult file = new StreamResult(myFile);
-
-    transf.setOutputProperty(OutputKeys.INDENT, "yes");
-    transf.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-    transf.transform(source, file);
-
-    FileSystemResource resource = new FileSystemResource(logname);
-    return resource;
+          StreamResult result = new StreamResult(out);
+          DOMSource source = new DOMSource(doc);
+          transformer.transform(source, result);
+          out.flush();
+        } catch (Exception e) {
+          createErrorEventLog(
+              request.getUsername(),
+              request.getTransactionId(),
+              Enums.CommandType.DUMPLOG,
+              null,
+              request.getFilename(),
+              null,
+              "Logfile generation error.");
+        }
+      }
+    };
   }
 
   /** Wrapper for createErrorEventLog */
