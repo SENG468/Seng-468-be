@@ -74,6 +74,7 @@ public class TransactionService {
   }
 
   public Transaction createSimpleSellTransaction(Transaction transaction) {
+    transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
     double quote =
         getQuote(
                 transaction.getUserName(),
