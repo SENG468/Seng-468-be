@@ -1,6 +1,7 @@
 package com.daytrade.stocktrade.Services;
 
 import com.daytrade.stocktrade.Models.Account;
+import com.daytrade.stocktrade.Models.Command;
 import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
@@ -140,37 +141,67 @@ public class TransactionService {
     transactionRepository.saveAll(expiredTransactions);
   }
 
-  public Transaction getPendingSellTransactions() {
+  public Transaction getPendingSellTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> sellTransactions =
         transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
             userName, Enums.TransactionType.SELL, Enums.TransactionStatus.PENDING);
     if (sellTransactions.size() < 1) {
+      loggerService.createErrorEventLog(
+          cmd.getUsername(),
+          cmd.getTransactionId(),
+          cmd.getType(),
+          null,
+          null,
+          null,
+          cmd.getType().name() + " - No sell requests.");
       throw new EntityMissingException();
     }
-    return sellTransactions.get(0);
+    Transaction recentTransaction = sellTransactions.get(0);
+    recentTransaction.setTransactionId(cmd.getTransactionId());
+    return recentTransaction;
   }
 
-  public Transaction getPendingBuyTransactions() {
+  public Transaction getPendingBuyTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> buyTransactions =
         transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
             userName, Enums.TransactionType.BUY, Enums.TransactionStatus.PENDING);
     if (buyTransactions.size() < 1) {
+      loggerService.createErrorEventLog(
+          cmd.getUsername(),
+          cmd.getTransactionId(),
+          cmd.getType(),
+          null,
+          null,
+          null,
+          cmd.getType().name() + " - No buy requests.");
       throw new EntityMissingException();
     }
-    return buyTransactions.get(0);
+    Transaction recentTransaction = buyTransactions.get(0);
+    recentTransaction.setTransactionId(cmd.getTransactionId());
+    return recentTransaction;
   }
 
-  public Transaction getPendingLimitBuyTransactions() {
+  public Transaction getPendingLimitBuyTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> buyTransactions =
         transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
             userName, Enums.TransactionType.BUY_AT, Enums.TransactionStatus.PENDING);
     if (buyTransactions.size() < 1) {
+      loggerService.createErrorEventLog(
+          cmd.getUsername(),
+          cmd.getTransactionId(),
+          cmd.getType(),
+          null,
+          null,
+          null,
+          cmd.getType().name() + " - No buy triggers.");
       throw new EntityMissingException();
     }
-    return buyTransactions.get(0);
+    Transaction recentTransaction = buyTransactions.get(0);
+    recentTransaction.setTransactionId(cmd.getTransactionId());
+    return recentTransaction;
   }
 
   public Transaction getPendingLimitSellTransactionsByTicker(String stockTicker) {
@@ -220,15 +251,25 @@ public class TransactionService {
     return sellTransactions.get(0);
   }
 
-  public Transaction getPendingLimitSellTransactions() {
+  public Transaction getPendingLimitSellTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> sellTransactions =
         transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
             userName, Enums.TransactionType.SELL_AT, Enums.TransactionStatus.PENDING);
     if (sellTransactions.size() < 1) {
+      loggerService.createErrorEventLog(
+          cmd.getUsername(),
+          cmd.getTransactionId(),
+          cmd.getType(),
+          null,
+          null,
+          null,
+          cmd.getType().name() + " - No sell triggers.");
       throw new EntityMissingException();
     }
-    return sellTransactions.get(0);
+    Transaction recentTransaction = sellTransactions.get(0);
+    recentTransaction.setTransactionId(cmd.getTransactionId());
+    return recentTransaction;
   }
 
   public Account updateAccount(Transaction transaction) {
