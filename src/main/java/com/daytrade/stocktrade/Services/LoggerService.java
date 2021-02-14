@@ -207,7 +207,7 @@ public class LoggerService {
       Instant quoteServerTime,
       String cryptoKey) {
     String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
-    Logger log = new Logger(Enums.LogType.QuoteServerType, finalTransactionNum, "Pfilbert");
+    Logger log = new Logger(Enums.LogType.QuoteServerType, finalTransactionNum, "QSRV");
     log.setUserName(user);
     log.setStockSymbol(stockSymbol);
     log.setUnitPrice(unitPrice);

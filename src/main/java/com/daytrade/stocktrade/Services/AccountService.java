@@ -36,6 +36,14 @@ public class AccountService {
   public Account addFundsToAccount(Account request) throws EntityMissingException {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     if (request.getBalance() < 0) {
+      loggerService.createErrorEventLog(
+          name,
+          request.getTransactionId(),
+          Enums.CommandType.ADD,
+          null,
+          null,
+          null,
+          "Cannot add negative money.");
       throw new BadRequestException("You cannot add negative money to an account");
     }
     Account account = accountRepository.findByName(name).orElseThrow(EntityMissingException::new);
