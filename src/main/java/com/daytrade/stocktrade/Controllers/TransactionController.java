@@ -29,12 +29,12 @@ public class TransactionController {
 
   @GetMapping("/quote/{stockSym}")
   public Map<String, Double> getQuote(
-      @PathVariable("stockSym") String stockSym, @RequestParam(name = "transactionId") String transId) {
+      @PathVariable("stockSym") String stockSym,
+      @RequestParam(name = "transactionId") String transId) {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     Map<String, Double> out = new HashMap<>();
     loggerService.createCommandLog(name, transId, Enums.CommandType.QUOTE, stockSym, null, null);
-    Double quote =
-        transactionService.getQuote(name, stockSym, transId).getUnitPrice();
+    Double quote = transactionService.getQuote(name, stockSym, transId).getUnitPrice();
     out.put(stockSym, quote);
     return out;
   }
@@ -64,7 +64,7 @@ public class TransactionController {
   public Transaction createLimitOrder(@Valid @RequestBody Transaction transaction) {
     if (transaction.getType().equals(Enums.TransactionType.SELL_AT)
         || transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
-          Enums.CommandType cmdType =
+      Enums.CommandType cmdType =
           transaction.getType().equals(Enums.TransactionType.SELL_AT)
               ? Enums.CommandType.SET_SELL_AMOUNT
               : Enums.CommandType.SET_BUY_AMOUNT;
@@ -85,7 +85,7 @@ public class TransactionController {
       String name = SecurityContextHolder.getContext().getAuthentication().getName();
       newTransaction.setUserName(name);
       loggerService.createTransactionCommandLog(
-        newTransaction, Enums.CommandType.SET_BUY_TRIGGER, null);
+          newTransaction, Enums.CommandType.SET_BUY_TRIGGER, null);
       Command cmd = new Command();
       cmd.setTransactionId(newTransaction.getTransactionId());
       cmd.setUsername(name);
@@ -107,7 +107,7 @@ public class TransactionController {
       String name = SecurityContextHolder.getContext().getAuthentication().getName();
       newTransaction.setUserName(name);
       loggerService.createTransactionCommandLog(
-        newTransaction, Enums.CommandType.SET_SELL_TRIGGER, null);
+          newTransaction, Enums.CommandType.SET_SELL_TRIGGER, null);
       Command cmd = new Command();
       cmd.setTransactionId(newTransaction.getTransactionId());
       cmd.setUsername(name);
@@ -127,12 +127,12 @@ public class TransactionController {
   @PostMapping("/setSell/cancel/{stock}")
   public Transaction cancelSellLimitOrder(
       @Valid @RequestBody Command cmd, @PathVariable("stock") String stockTicker) {
-        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+    String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.CANCEL_SET_SELL);
     try {
       loggerService.createCommandLog(
-        name, cmd.getTransactionId(), Enums.CommandType.CANCEL_SET_SELL, stockTicker, null, null);
+          name, cmd.getTransactionId(), cmd.getType(), stockTicker, null, null);
       Transaction savedTransaction =
           transactionService.getPendingLimitSellTransactionsByTicker(stockTicker);
       savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
@@ -154,7 +154,7 @@ public class TransactionController {
     cmd.setType(Enums.CommandType.CANCEL_SET_BUY);
     try {
       loggerService.createCommandLog(
-        name, cmd.getTransactionId(), Enums.CommandType.CANCEL_SET_BUY, stockTicker, null, null);
+          name, cmd.getTransactionId(), cmd.getType(), stockTicker, null, null);
       Transaction savedTransaction =
           transactionService.getPendingLimitBuyTransactionsByTicker(stockTicker);
       savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
@@ -172,8 +172,7 @@ public class TransactionController {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.CANCEL_BUY);
-    loggerService.createCommandLog(
-      name, cmd.getTransactionId(), Enums.CommandType.CANCEL_BUY, null, null, null);
+    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     Transaction transaction = transactionService.getPendingBuyTransactions(cmd);
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
     return transactionService.cancelTransaction(transaction);
@@ -184,8 +183,7 @@ public class TransactionController {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.CANCEL_SELL);
-    loggerService.createCommandLog(
-      name, cmd.getTransactionId(), Enums.CommandType.CANCEL_SELL, null, null, null);
+    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     Transaction transaction = transactionService.getPendingSellTransactions(cmd);
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
     return transactionService.cancelTransaction(transaction);
@@ -196,8 +194,7 @@ public class TransactionController {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.COMMIT_SELL);
-    loggerService.createCommandLog(
-      name, cmd.getTransactionId(), Enums.CommandType.COMMIT_SELL, null, null, null);
+    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     Transaction transaction = transactionService.getPendingSellTransactions(cmd);
     transaction = transactionService.commitSimpleOrder(transaction);
     transactionService.updateAccount(transaction);
@@ -209,8 +206,7 @@ public class TransactionController {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.COMMIT_BUY);
-    loggerService.createCommandLog(
-      name, cmd.getTransactionId(), Enums.CommandType.COMMIT_BUY, null, null, null);
+    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     Transaction transaction = transactionService.getPendingBuyTransactions(cmd);
     transaction = transactionService.commitSimpleOrder(transaction);
     return transactionService.updateAccount(transaction);

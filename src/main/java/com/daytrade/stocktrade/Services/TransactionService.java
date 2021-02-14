@@ -225,13 +225,13 @@ public class TransactionService {
             stockTicker);
     if (sellTransactions.size() < 1) {
       loggerService.createErrorEventLog(
-        cmd.getUsername(),
-        cmd.getTransactionId(),
-        cmd.getType(),
-        null,
-        null,
-        null,
-        "No open sell triggers for " + stockTicker);
+          cmd.getUsername(),
+          cmd.getTransactionId(),
+          cmd.getType(),
+          null,
+          null,
+          null,
+          "No open sell triggers for " + stockTicker);
       throw new EntityMissingException();
     }
     Transaction recentTransaction = sellTransactions.get(0);
@@ -257,13 +257,13 @@ public class TransactionService {
             userName, Enums.TransactionType.BUY_AT, Enums.TransactionStatus.COMMITTED, stockTicker);
     if (sellTransactions.size() < 1) {
       loggerService.createErrorEventLog(
-        cmd.getUsername(),
-        cmd.getTransactionId(),
-        cmd.getType(),
-        null,
-        null,
-        null,
-        "No open buy triggers for " + stockTicker);
+          cmd.getUsername(),
+          cmd.getTransactionId(),
+          cmd.getType(),
+          null,
+          null,
+          null,
+          "No open buy triggers for " + stockTicker);
       throw new EntityMissingException();
     }
     Transaction recentTransaction = sellTransactions.get(0);
