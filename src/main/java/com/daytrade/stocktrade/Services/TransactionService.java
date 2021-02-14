@@ -307,7 +307,7 @@ public class TransactionService {
             transaction.getUserName(),
             transaction.getTransactionId(),
             "remove",
-            account.getBalance());
+            transaction.getUnitPrice() * transaction.getStockAmount());
       }
       // Update portfolio with new stock counts
       long stockAmount;
@@ -331,7 +331,10 @@ public class TransactionService {
           account.getBalance() + transaction.getUnitPrice() * transaction.getStockAmount();
       account.setBalance(newMoney);
       loggerService.createAccountTransactionLog(
-          transaction.getUserName(), transaction.getTransactionId(), "add", account.getBalance());
+          transaction.getUserName(),
+          transaction.getTransactionId(),
+          "add",
+          transaction.getUnitPrice() * transaction.getStockAmount());
     }
     return accountService.save(account);
   }
@@ -388,7 +391,7 @@ public class TransactionService {
     }
     account.setBalance(account.getBalance() - cashAmount);
     loggerService.createAccountTransactionLog(
-        transaction.getUserName(), transaction.getTransactionId(), "remove", account.getBalance());
+        transaction.getUserName(), transaction.getTransactionId(), "remove", cashAmount);
     return accountService.save(account);
   }
 
@@ -403,7 +406,10 @@ public class TransactionService {
     if (transaction.getStatus().equals(Enums.TransactionStatus.COMMITTED)) {
       account.setBalance(account.getBalance() + transaction.getCashAmount());
       loggerService.createAccountTransactionLog(
-          transaction.getUserName(), transaction.getTransactionId(), "add", account.getBalance());
+          transaction.getUserName(),
+          transaction.getTransactionId(),
+          "add",
+          transaction.getCashAmount());
       accountService.save(account);
     }
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
@@ -459,7 +465,7 @@ public class TransactionService {
     Account account = accountService.getByName(order.getUserName());
     account.setBalance(account.getBalance() + refund);
     loggerService.createAccountTransactionLog(
-        order.getUserName(), order.getTransactionId(), "add", account.getBalance());
+        order.getUserName(), order.getTransactionId(), "add", refund);
     return accountService.save(account);
   }
 }
