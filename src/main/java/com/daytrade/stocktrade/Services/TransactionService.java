@@ -154,7 +154,7 @@ public class TransactionService {
           null,
           null,
           null,
-          cmd.getType().name() + " - No sell requests.");
+          "No open sell requests.");
       throw new EntityMissingException();
     }
     Transaction recentTransaction = sellTransactions.get(0);
@@ -175,7 +175,7 @@ public class TransactionService {
           null,
           null,
           null,
-          cmd.getType().name() + " - No buy requests.");
+          "No open buy requests.");
       throw new EntityMissingException();
     }
     Transaction recentTransaction = buyTransactions.get(0);
@@ -196,7 +196,7 @@ public class TransactionService {
           null,
           null,
           null,
-          cmd.getType().name() + " - No buy triggers.");
+          "No open buy triggers.");
       throw new EntityMissingException();
     }
     Transaction recentTransaction = buyTransactions.get(0);
@@ -215,7 +215,7 @@ public class TransactionService {
     return sellTransactions.get(0);
   }
 
-  public Transaction getCommittedLimitSellTransactionsByTicker(String stockTicker) {
+  public Transaction getCommittedLimitSellTransactionsByTicker(String stockTicker, Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> sellTransactions =
         transactionRepository.findByUserNameAndTypeAndStatusAndStockCodeOrderByCreatedDate(
@@ -224,9 +224,19 @@ public class TransactionService {
             Enums.TransactionStatus.COMMITTED,
             stockTicker);
     if (sellTransactions.size() < 1) {
+      loggerService.createErrorEventLog(
+          cmd.getUsername(),
+          cmd.getTransactionId(),
+          cmd.getType(),
+          null,
+          null,
+          null,
+          "No open sell triggers for " + stockTicker);
       throw new EntityMissingException();
     }
-    return sellTransactions.get(0);
+    Transaction recentTransaction = sellTransactions.get(0);
+    recentTransaction.setTransactionId(cmd.getTransactionId());
+    return recentTransaction;
   }
 
   public Transaction getPendingLimitBuyTransactionsByTicker(String stockTicker) {
@@ -240,15 +250,25 @@ public class TransactionService {
     return sellTransactions.get(0);
   }
 
-  public Transaction getCommittedLimitBuyTransactionsByTicker(String stockTicker) {
+  public Transaction getCommittedLimitBuyTransactionsByTicker(String stockTicker, Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> sellTransactions =
         transactionRepository.findByUserNameAndTypeAndStatusAndStockCodeOrderByCreatedDate(
             userName, Enums.TransactionType.BUY_AT, Enums.TransactionStatus.COMMITTED, stockTicker);
     if (sellTransactions.size() < 1) {
+      loggerService.createErrorEventLog(
+          cmd.getUsername(),
+          cmd.getTransactionId(),
+          cmd.getType(),
+          null,
+          null,
+          null,
+          "No open buy triggers for " + stockTicker);
       throw new EntityMissingException();
     }
-    return sellTransactions.get(0);
+    Transaction recentTransaction = sellTransactions.get(0);
+    recentTransaction.setTransactionId(cmd.getTransactionId());
+    return recentTransaction;
   }
 
   public Transaction getPendingLimitSellTransactions(Command cmd) {
@@ -264,7 +284,7 @@ public class TransactionService {
           null,
           null,
           null,
-          cmd.getType().name() + " - No sell triggers.");
+          "No open sell triggers.");
       throw new EntityMissingException();
     }
     Transaction recentTransaction = sellTransactions.get(0);
