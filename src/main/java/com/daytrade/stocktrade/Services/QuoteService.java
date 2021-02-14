@@ -55,8 +55,8 @@ public class QuoteService {
     String fromServer = "";
 
     try {
-      System.out.println("Connectd");
-      this.out.println("QUOTE," + userid + "," + stockSymbol);
+      System.out.println("Connected");
+      this.out.println(stockSymbol + "," + userid);
       fromServer = in.readLine();
 
       System.out.print(fromServer);
