@@ -20,11 +20,10 @@ public class QuoteService {
     this.loggerService = loggerService;
   }
 
-  private Socket qsSocket = null;
-  private PrintWriter out = null;
-  private BufferedReader in = null;
-
   public Quote quote(String userid, String stockSymbol, String transactionNumber) {
+    Socket qsSocket = null;
+    PrintWriter out = null;
+    BufferedReader in = null;
     try {
       qsSocket = new Socket("192.168.4.2", 4442);
       out = new PrintWriter(qsSocket.getOutputStream(), true);
@@ -56,15 +55,24 @@ public class QuoteService {
 
     try {
       System.out.println("Connected");
-      this.out.println(stockSymbol + "," + userid);
-      fromServer = in.readLine();
+      if (out != null) {
+        out.println(stockSymbol + "," + userid);
+      }
+      if (in != null) {
+        fromServer = in.readLine();
+      }
 
       System.out.print(fromServer);
       // TODO: remove message in final revision
-
-      out.close();
-      in.close();
-      qsSocket.close();
+      if (out != null) {
+        out.close();
+      }
+      if (in != null) {
+        in.close();
+      }
+      if (qsSocket != null) {
+        qsSocket.close();
+      }
     } catch (IOException ex) {
       loggerService.createErrorEventLog(
           userid,
