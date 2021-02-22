@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.time.Instant;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,7 +21,8 @@ public class QuoteService {
     this.loggerService = loggerService;
   }
 
-  public Quote quote(String userid, String stockSymbol, String transactionNumber) {
+  @Cacheable(cacheNames = "quotes", key = "#userId+#stockSymbol")
+  public Quote getQuote(String userId, String stockSymbol, String transactionNumber) {
     Socket qsSocket = null;
     PrintWriter out = null;
     BufferedReader in = null;
@@ -30,7 +32,7 @@ public class QuoteService {
       in = new BufferedReader(new InputStreamReader(qsSocket.getInputStream()));
     } catch (UnknownHostException e) {
       loggerService.createErrorEventLog(
-          userid,
+          userId,
           transactionNumber,
           Enums.CommandType.QUOTE,
           stockSymbol,
@@ -39,7 +41,7 @@ public class QuoteService {
           "UnknownHostException");
     } catch (IOException e) {
       loggerService.createErrorEventLog(
-          userid,
+          userId,
           transactionNumber,
           Enums.CommandType.QUOTE,
           stockSymbol,
@@ -48,7 +50,7 @@ public class QuoteService {
           "IOException");
     } catch (Exception e) {
       loggerService.createErrorEventLog(
-          userid, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, null, "Exception");
+          userId, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, null, "Exception");
     }
 
     String fromServer = "";
@@ -56,7 +58,7 @@ public class QuoteService {
     try {
       System.out.println("Connected");
       if (out != null) {
-        out.println(stockSymbol + "," + userid);
+        out.println(stockSymbol + "," + userId);
       }
       if (in != null) {
         fromServer = in.readLine();
@@ -75,7 +77,7 @@ public class QuoteService {
       }
     } catch (IOException ex) {
       loggerService.createErrorEventLog(
-          userid,
+          userId,
           transactionNumber,
           Enums.CommandType.QUOTE,
           stockSymbol,
@@ -96,9 +98,9 @@ public class QuoteService {
     String cryptokey = serverResponse[4];
 
     loggerService.createQuoteServerLog(
-        userid, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
+        userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
 
-    return new Quote(userid, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
+    return new Quote(userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
   }
 
   private Double parseQuoteToDouble(String quote) {

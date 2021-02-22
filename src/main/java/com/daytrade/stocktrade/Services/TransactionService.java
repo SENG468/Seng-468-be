@@ -36,7 +36,7 @@ public class TransactionService {
   }
 
   public Quote getQuote(String userId, String stockSymbol, String transId) {
-    return quoteService.quote(userId, stockSymbol, transId);
+    return quoteService.getQuote(userId, stockSymbol, transId);
   }
 
   public Transaction createSimpleBuyTransaction(Transaction transaction) {
