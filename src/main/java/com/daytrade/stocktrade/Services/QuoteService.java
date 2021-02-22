@@ -56,7 +56,7 @@ public class QuoteService {
     String fromServer = "";
 
     try {
-      System.out.println("Connected");
+     // System.out.println("Connected");
       if (out != null) {
         out.println(stockSymbol + "," + userId);
       }
@@ -64,7 +64,7 @@ public class QuoteService {
         fromServer = in.readLine();
       }
 
-      System.out.print(fromServer);
+      //System.out.print(fromServer);
       // TODO: remove message in final revision
       if (out != null) {
         out.close();

@@ -17,7 +17,8 @@
 ---
 ## Running the Application on the VM
 1. `docker run -p 27017:27017 mongo`
-2. `./runOnVm.sh`
+2. `docker run -p 6379:6379 redis`
+3. `./runOnVm.sh`
 ---
 
 ## Docker
