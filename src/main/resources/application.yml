@@ -5,6 +5,9 @@ server:
     context-path: /stock-trade
   port: 8080
 
+redis:
+  host: localhost
+  port: 6379
 spring:
   data:
     mongodb:

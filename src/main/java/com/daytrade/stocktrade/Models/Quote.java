@@ -1,12 +1,13 @@
 package com.daytrade.stocktrade.Models;
 
+import java.io.Serializable;
 import java.time.Instant;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class Quote {
+public class Quote implements Serializable {
   public Quote(
       String id,
       String transactionNumber,

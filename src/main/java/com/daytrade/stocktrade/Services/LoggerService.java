@@ -304,10 +304,10 @@ public class LoggerService {
             filename,
             funds,
             errorMessage);
-    try {
-      System.out.print(new ObjectMapper().writeValueAsString(log));
-    } catch (Exception ex) {
-    }
+//    try {
+//      System.out.print(new ObjectMapper().writeValueAsString(log));
+//    } catch (Exception ex) {
+//    }
     return loggerRepository.save(log);
   }
 
