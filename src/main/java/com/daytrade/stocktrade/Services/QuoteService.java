@@ -21,7 +21,7 @@ public class QuoteService {
     this.loggerService = loggerService;
   }
 
-  @Cacheable(cacheNames = "quotes", key = "#userId+#stockSymbol")
+  @Cacheable(cacheNames = "quotes", key = "#stockSymbol")
   public Quote getQuote(String userId, String stockSymbol, String transactionNumber) {
     Socket qsSocket = null;
     PrintWriter out = null;
@@ -56,7 +56,7 @@ public class QuoteService {
     String fromServer = "";
 
     try {
-     // System.out.println("Connected");
+      // System.out.println("Connected");
       if (out != null) {
         out.println(stockSymbol + "," + userId);
       }
@@ -64,7 +64,7 @@ public class QuoteService {
         fromServer = in.readLine();
       }
 
-      //System.out.print(fromServer);
+      // System.out.print(fromServer);
       // TODO: remove message in final revision
       if (out != null) {
         out.close();
