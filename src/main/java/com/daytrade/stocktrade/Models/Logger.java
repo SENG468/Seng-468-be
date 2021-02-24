@@ -6,6 +6,7 @@ import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "logs")
@@ -30,9 +31,9 @@ public class Logger {
 
   private Enums.CommandType commandType;
 
-  private String userName;
+  @Indexed String userName;
 
-  @CreatedDate private Instant timestamp;
+  @CreatedDate @Indexed private Instant timestamp;
 
   private String stockSymbol;
 
