@@ -24,8 +24,7 @@ public class Transaction {
 
   private Double cashAmount;
 
-  @Indexed
-  private String userName;
+  @Indexed private String userName;
 
   @CreatedDate @Indexed private Instant createdDate;
 
