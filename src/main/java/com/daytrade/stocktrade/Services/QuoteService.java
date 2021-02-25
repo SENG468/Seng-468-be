@@ -9,98 +9,104 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.time.Instant;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
 public class QuoteService {
 
   private final LoggerService loggerService;
+  private final CacheService cacheService;
 
-  public QuoteService(LoggerService loggerService) {
+  public QuoteService(LoggerService loggerService, CacheService cacheService) {
     this.loggerService = loggerService;
+    this.cacheService = cacheService;
   }
 
-  @Cacheable(cacheNames = "quotes", key = "#stockSymbol")
   public Quote getQuote(String userId, String stockSymbol, String transactionNumber) {
-    Socket qsSocket = null;
-    PrintWriter out = null;
-    BufferedReader in = null;
-    try {
-      qsSocket = new Socket("192.168.4.2", 4442);
-      out = new PrintWriter(qsSocket.getOutputStream(), true);
-      in = new BufferedReader(new InputStreamReader(qsSocket.getInputStream()));
-    } catch (UnknownHostException e) {
-      loggerService.createErrorEventLog(
-          userId,
-          transactionNumber,
-          Enums.CommandType.QUOTE,
-          stockSymbol,
-          null,
-          null,
-          "UnknownHostException");
-    } catch (IOException e) {
-      loggerService.createErrorEventLog(
-          userId,
-          transactionNumber,
-          Enums.CommandType.QUOTE,
-          stockSymbol,
-          null,
-          null,
-          "IOException");
-    } catch (Exception e) {
-      loggerService.createErrorEventLog(
-          userId, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, null, "Exception");
+    Quote cachedQuote = cacheService.getCacheQuote(stockSymbol);
+    if(cachedQuote == null) {
+      Socket qsSocket = null;
+      PrintWriter out = null;
+      BufferedReader in = null;
+      try {
+        qsSocket = new Socket("192.168.4.2", 4442);
+        out = new PrintWriter(qsSocket.getOutputStream(), true);
+        in = new BufferedReader(new InputStreamReader(qsSocket.getInputStream()));
+      } catch (UnknownHostException e) {
+        loggerService.createErrorEventLog(
+            userId,
+            transactionNumber,
+            Enums.CommandType.QUOTE,
+            stockSymbol,
+            null,
+            null,
+            "UnknownHostException");
+      } catch (IOException e) {
+        loggerService.createErrorEventLog(
+            userId,
+            transactionNumber,
+            Enums.CommandType.QUOTE,
+            stockSymbol,
+            null,
+            null,
+            "IOException");
+      } catch (Exception e) {
+        loggerService.createErrorEventLog(
+            userId, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, null, "Exception");
+      }
+  
+      String fromServer = "";
+  
+      try {
+        // System.out.println("Connected");
+        if (out != null) {
+          out.println(stockSymbol + "," + userId);
+        }
+        if (in != null) {
+          fromServer = in.readLine();
+        }
+  
+        // System.out.print(fromServer);
+        // TODO: remove message in final revision
+        if (out != null) {
+          out.close();
+        }
+        if (in != null) {
+          in.close();
+        }
+        if (qsSocket != null) {
+          qsSocket.close();
+        }
+      } catch (IOException ex) {
+        loggerService.createErrorEventLog(
+            userId,
+            transactionNumber,
+            Enums.CommandType.QUOTE,
+            stockSymbol,
+            null,
+            null,
+            "IO exception: " + ex.getMessage());
+      }
+  
+      // serverReponse is returned as "quote, symbol, userid, timestamp, cryptokey"
+      String[] serverResponse = fromServer.split(",");
+  
+      Double quoteValue = parseQuoteToDouble(serverResponse[0]);
+  
+      Long serverTime = parseTimetoLong(serverResponse[3]);
+  
+      Instant timestamp = Instant.ofEpochMilli(serverTime);
+  
+      String cryptokey = serverResponse[4];
+  
+      loggerService.createQuoteServerLog(
+          userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
+      Quote freshQuote = new Quote(userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
+      cacheService.populateCacheQuote(freshQuote, stockSymbol);
+      return freshQuote;
     }
-
-    String fromServer = "";
-
-    try {
-      // System.out.println("Connected");
-      if (out != null) {
-        out.println(stockSymbol + "," + userId);
-      }
-      if (in != null) {
-        fromServer = in.readLine();
-      }
-
-      // System.out.print(fromServer);
-      // TODO: remove message in final revision
-      if (out != null) {
-        out.close();
-      }
-      if (in != null) {
-        in.close();
-      }
-      if (qsSocket != null) {
-        qsSocket.close();
-      }
-    } catch (IOException ex) {
-      loggerService.createErrorEventLog(
-          userId,
-          transactionNumber,
-          Enums.CommandType.QUOTE,
-          stockSymbol,
-          null,
-          null,
-          "IO exception: " + ex.getMessage());
-    }
-
-    // serverReponse is returned as "quote, symbol, userid, timestamp, cryptokey"
-    String[] serverResponse = fromServer.split(",");
-
-    Double quoteValue = parseQuoteToDouble(serverResponse[0]);
-
-    Long serverTime = parseTimetoLong(serverResponse[3]);
-
-    Instant timestamp = Instant.ofEpochMilli(serverTime);
-
-    String cryptokey = serverResponse[4];
-
-    loggerService.createQuoteServerLog(
-        userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
-
-    return new Quote(userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
+    loggerService.createSystemEventLog(userId, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, cachedQuote.getUnitPrice());
+    return cachedQuote;
   }
 
   private Double parseQuoteToDouble(String quote) {
