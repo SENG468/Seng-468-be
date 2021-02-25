@@ -14,7 +14,7 @@ public class CacheService {
     return null;
   }
 
-  // Put on cache hit
+  // Put on cache miss
   @CachePut(cacheNames = "quotes", key = "#stockSymbol")
   public Quote populateCacheQuote(Quote freshQuote, String stockSymbol) {
     return freshQuote;
