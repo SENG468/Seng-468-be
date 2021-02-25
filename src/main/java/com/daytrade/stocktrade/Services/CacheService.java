@@ -1,7 +1,6 @@
 package com.daytrade.stocktrade.Services;
 
 import com.daytrade.stocktrade.Models.Quote;
-
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -11,7 +10,7 @@ public class CacheService {
 
   // Returns quote on hit, null on miss
   @Cacheable(cacheNames = "quotes", key = "#stockSymbol", unless = "#result == null")
-  public Quote getCacheQuote(String stockSymbol){
+  public Quote getCacheQuote(String stockSymbol) {
     return null;
   }
 

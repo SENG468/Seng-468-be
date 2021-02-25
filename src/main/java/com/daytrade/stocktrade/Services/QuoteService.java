@@ -24,7 +24,7 @@ public class QuoteService {
 
   public Quote getQuote(String userId, String stockSymbol, String transactionNumber) {
     Quote cachedQuote = cacheService.getCacheQuote(stockSymbol);
-    if(cachedQuote == null) {
+    if (cachedQuote == null) {
       Socket qsSocket = null;
       PrintWriter out = null;
       BufferedReader in = null;
@@ -52,11 +52,17 @@ public class QuoteService {
             "IOException");
       } catch (Exception e) {
         loggerService.createErrorEventLog(
-            userId, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, null, "Exception");
+            userId,
+            transactionNumber,
+            Enums.CommandType.QUOTE,
+            stockSymbol,
+            null,
+            null,
+            "Exception");
       }
-  
+
       String fromServer = "";
-  
+
       try {
         // System.out.println("Connected");
         if (out != null) {
@@ -65,7 +71,7 @@ public class QuoteService {
         if (in != null) {
           fromServer = in.readLine();
         }
-  
+
         // System.out.print(fromServer);
         // TODO: remove message in final revision
         if (out != null) {
@@ -87,25 +93,32 @@ public class QuoteService {
             null,
             "IO exception: " + ex.getMessage());
       }
-  
+
       // serverReponse is returned as "quote, symbol, userid, timestamp, cryptokey"
       String[] serverResponse = fromServer.split(",");
-  
+
       Double quoteValue = parseQuoteToDouble(serverResponse[0]);
-  
+
       Long serverTime = parseTimetoLong(serverResponse[3]);
-  
+
       Instant timestamp = Instant.ofEpochMilli(serverTime);
-  
+
       String cryptokey = serverResponse[4];
-  
+
       loggerService.createQuoteServerLog(
           userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
-      Quote freshQuote = new Quote(userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
+      Quote freshQuote =
+          new Quote(userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
       cacheService.populateCacheQuote(freshQuote, stockSymbol);
       return freshQuote;
     }
-    loggerService.createSystemEventLog(userId, transactionNumber, Enums.CommandType.QUOTE, stockSymbol, null, cachedQuote.getUnitPrice());
+    loggerService.createSystemEventLog(
+        userId,
+        transactionNumber,
+        Enums.CommandType.QUOTE,
+        stockSymbol,
+        null,
+        cachedQuote.getUnitPrice());
     return cachedQuote;
   }
 

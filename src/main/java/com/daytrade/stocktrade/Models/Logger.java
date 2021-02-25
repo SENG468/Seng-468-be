@@ -31,7 +31,7 @@ public class Logger {
 
   private Enums.CommandType commandType;
 
-  @Indexed String userName;
+  @Indexed private String userName;
 
   @CreatedDate @Indexed private Instant timestamp;
 
