@@ -9,7 +9,7 @@ spring:
   data:
     mongodb:
       auto-index-creation: true
-      uri: mongodb://127.0.0.1:27017/seng468
+      uri: mongodb://${MONGO_HOST}/seng468
 
 security:
   #  One day in MS

@@ -35,11 +35,13 @@ public class TransactionService {
     this.quoteService = quoteService;
   }
 
-  public Quote getQuote(String userId, String stockSymbol, String transId) {
+  public Quote getQuote(String userId, String stockSymbol, String transId)
+      throws InterruptedException {
     return quoteService.getQuote(userId, stockSymbol, transId);
   }
 
-  public Transaction createSimpleBuyTransaction(Transaction transaction) {
+  public Transaction createSimpleBuyTransaction(Transaction transaction)
+      throws InterruptedException {
     transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
     double quote =
         getQuote(
@@ -74,7 +76,8 @@ public class TransactionService {
     return transactionRepository.save(transaction);
   }
 
-  public Transaction createSimpleSellTransaction(Transaction transaction) {
+  public Transaction createSimpleSellTransaction(Transaction transaction)
+      throws InterruptedException {
     transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
     double quote =
         getQuote(
@@ -420,7 +423,7 @@ public class TransactionService {
     return transactionRepository.save(transaction);
   }
 
-  public void fillSellLimitOrders() {
+  public void fillSellLimitOrders() throws InterruptedException {
     List<Transaction> orders =
         transactionRepository.findAllByStatusAndType(
             Enums.TransactionStatus.COMMITTED, Enums.TransactionType.SELL_AT);
@@ -436,7 +439,7 @@ public class TransactionService {
     }
   }
 
-  public void fillBuyLimitOrders() {
+  public void fillBuyLimitOrders() throws InterruptedException {
     List<Transaction> orders =
         transactionRepository.findAllByStatusAndType(
             Enums.TransactionStatus.COMMITTED, Enums.TransactionType.BUY_AT);

@@ -25,13 +25,13 @@ public class OrderManagementThread {
 
   // Check if any of the limit sell orders can be filled
   @Scheduled(fixedDelay = 60000)
-  public void fillSellLimitOrders() {
+  public void fillSellLimitOrders() throws InterruptedException {
     transactionService.fillSellLimitOrders();
   }
 
   // Check if any of the limit buy orders can be filled
   @Scheduled(fixedDelay = 60000)
-  public void fillBuyLimitOrders() {
+  public void fillBuyLimitOrders() throws InterruptedException {
     transactionService.fillBuyLimitOrders();
   }
 }
