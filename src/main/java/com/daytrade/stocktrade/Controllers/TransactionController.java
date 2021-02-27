@@ -30,7 +30,8 @@ public class TransactionController {
   @GetMapping("/quote/{stockSym}")
   public Map<String, Double> getQuote(
       @PathVariable("stockSym") String stockSym,
-      @RequestParam(name = "transactionId") String transId) {
+      @RequestParam(name = "transactionId") String transId)
+      throws InterruptedException {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     Map<String, Double> out = new HashMap<>();
     loggerService.createCommandLog(name, transId, Enums.CommandType.QUOTE, stockSym, null, null);

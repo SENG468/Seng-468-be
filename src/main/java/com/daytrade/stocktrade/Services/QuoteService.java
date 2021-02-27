@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.time.Instant;
+import java.util.concurrent.Semaphore;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,18 +17,22 @@ public class QuoteService {
 
   private final LoggerService loggerService;
   private final CacheService cacheService;
+  // I ran it 3 times. 10 fails and 7 was slower
+  private final Semaphore semaphore = new Semaphore(5);
 
   public QuoteService(LoggerService loggerService, CacheService cacheService) {
     this.loggerService = loggerService;
     this.cacheService = cacheService;
   }
 
-  public Quote getQuote(String userId, String stockSymbol, String transactionNumber) {
+  public Quote getQuote(String userId, String stockSymbol, String transactionNumber)
+      throws InterruptedException {
     Quote cachedQuote = cacheService.getCacheQuote(stockSymbol);
     if (cachedQuote == null) {
       Socket qsSocket = null;
       PrintWriter out = null;
       BufferedReader in = null;
+      semaphore.acquire();
       try {
         qsSocket = new Socket("192.168.4.2", 4442);
         out = new PrintWriter(qsSocket.getOutputStream(), true);
@@ -71,7 +76,7 @@ public class QuoteService {
         if (in != null) {
           fromServer = in.readLine();
         }
-
+        semaphore.release();
         // System.out.print(fromServer);
         // TODO: remove message in final revision
         if (out != null) {
