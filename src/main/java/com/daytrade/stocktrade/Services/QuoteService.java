@@ -18,7 +18,7 @@ public class QuoteService {
 
   private final LoggerService loggerService;
   private final CacheService cacheService;
-
+  
   private final Semaphore mutex = new Semaphore(1);
   private static double delay = 50;
 
@@ -71,6 +71,7 @@ public class QuoteService {
       try {
         // System.out.println("Connected");
         if (out != null) {
+          // I don't think we need these replaces but just incase
           out.println(
               stockSymbol.replace("\n", "").replace("\r", "")
                   + ","
