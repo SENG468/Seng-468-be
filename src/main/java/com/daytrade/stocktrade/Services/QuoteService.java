@@ -18,7 +18,7 @@ public class QuoteService {
 
   private final LoggerService loggerService;
   private final CacheService cacheService;
-  
+
   private final Semaphore mutex = new Semaphore(1);
   private static double delay = 50;
 
@@ -78,8 +78,12 @@ public class QuoteService {
                   + userId.replace("\n", "").replace("\r", ""));
         }
         // Larger delay at startup, gradually decrease to 8ms
-        delay = delay * 0.99;
-        Thread.sleep(delay < 8 ? 8 : (long) delay);
+        if (delay > 8) {
+          delay = delay * 0.99;
+        } else {
+          delay = 8;
+        }
+        Thread.sleep((long) delay);
         mutex.release();
         String fromServer = "";
         if (in != null) {
