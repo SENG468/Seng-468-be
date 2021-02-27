@@ -1,6 +1,7 @@
 package com.daytrade.stocktrade.Services;
 
 import com.daytrade.stocktrade.Models.Enums;
+import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Quote;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,8 +18,9 @@ public class QuoteService {
 
   private final LoggerService loggerService;
   private final CacheService cacheService;
-  // I ran it 3 times. 10 fails and 7 was slower
-  private final Semaphore semaphore = new Semaphore(5);
+
+  private final Semaphore mutex = new Semaphore(1);
+  private static double delay = 50;
 
   public QuoteService(LoggerService loggerService, CacheService cacheService) {
     this.loggerService = loggerService;
@@ -32,7 +34,7 @@ public class QuoteService {
       Socket qsSocket = null;
       PrintWriter out = null;
       BufferedReader in = null;
-      semaphore.acquire();
+      mutex.acquire();
       try {
         qsSocket = new Socket("192.168.4.2", 4442);
         out = new PrintWriter(qsSocket.getOutputStream(), true);
@@ -66,17 +68,23 @@ public class QuoteService {
             "Exception");
       }
 
-      String fromServer = "";
-
       try {
         // System.out.println("Connected");
         if (out != null) {
-          out.println(stockSymbol + "," + userId);
+          out.println(
+              stockSymbol.replace("\n", "").replace("\r", "")
+                  + ","
+                  + userId.replace("\n", "").replace("\r", ""));
         }
+        // Larger delay at startup, gradually decrease to 8ms
+        delay = delay * 0.99;
+        Thread.sleep(delay < 8 ? 8 : (long) delay);
+        mutex.release();
+        String fromServer = "";
         if (in != null) {
           fromServer = in.readLine();
         }
-        semaphore.release();
+
         // System.out.print(fromServer);
         // TODO: remove message in final revision
         if (out != null) {
@@ -88,6 +96,24 @@ public class QuoteService {
         if (qsSocket != null) {
           qsSocket.close();
         }
+
+        // serverReponse is returned as "quote, symbol, userid, timestamp, cryptokey"
+        String[] serverResponse = fromServer.split(",");
+
+        Double quoteValue = parseQuoteToDouble(serverResponse[0]);
+
+        Long serverTime = parseTimetoLong(serverResponse[3]);
+
+        Instant timestamp = Instant.ofEpochMilli(serverTime);
+
+        String cryptokey = serverResponse[4];
+
+        loggerService.createQuoteServerLog(
+            userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
+        Quote freshQuote =
+            new Quote(userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
+        cacheService.populateCacheQuote(freshQuote, stockSymbol);
+        return freshQuote;
       } catch (IOException ex) {
         loggerService.createErrorEventLog(
             userId,
@@ -97,25 +123,18 @@ public class QuoteService {
             null,
             null,
             "IO exception: " + ex.getMessage());
+        throw new BadRequestException("Bad");
+      } catch (Exception e) {
+        loggerService.createErrorEventLog(
+            userId,
+            transactionNumber,
+            Enums.CommandType.QUOTE,
+            stockSymbol,
+            null,
+            null,
+            "Error: " + e.getMessage());
+        throw new BadRequestException("Big Bad");
       }
-
-      // serverReponse is returned as "quote, symbol, userid, timestamp, cryptokey"
-      String[] serverResponse = fromServer.split(",");
-
-      Double quoteValue = parseQuoteToDouble(serverResponse[0]);
-
-      Long serverTime = parseTimetoLong(serverResponse[3]);
-
-      Instant timestamp = Instant.ofEpochMilli(serverTime);
-
-      String cryptokey = serverResponse[4];
-
-      loggerService.createQuoteServerLog(
-          userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
-      Quote freshQuote =
-          new Quote(userId, transactionNumber, stockSymbol, quoteValue, timestamp, cryptokey);
-      cacheService.populateCacheQuote(freshQuote, stockSymbol);
-      return freshQuote;
     }
     loggerService.createSystemEventLog(
         userId,
