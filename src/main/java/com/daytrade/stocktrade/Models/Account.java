@@ -1,5 +1,7 @@
 package com.daytrade.stocktrade.Models;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
@@ -27,4 +29,8 @@ public class Account {
   private String transactionId;
 
   private Map<String, Long> portfolio = new HashMap<>();
+
+  public void setBalance(Double balance) {
+    this.balance = BigDecimal.valueOf(balance).setScale(2, RoundingMode.FLOOR).doubleValue();
+  }
 }
