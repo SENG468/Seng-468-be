@@ -1,5 +1,7 @@
 package com.daytrade.stocktrade.Models;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -31,4 +33,8 @@ public class Transaction {
   private String transactionId;
 
   private Double unitPrice;
+
+  public void setCashAmount(Double cashAmount) {
+    this.cashAmount = BigDecimal.valueOf(cashAmount).setScale(2, RoundingMode.FLOOR).doubleValue();
+  }
 }
