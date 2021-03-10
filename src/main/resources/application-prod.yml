@@ -11,6 +11,10 @@ spring:
       auto-index-creation: true
       uri: mongodb://${MONGO_HOST}/seng468
 
+redis:
+  host: ${REDIS_HOST}
+  port: 6379
+
 security:
   #  One day in MS
   expiry-ms: 86400000
