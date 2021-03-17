@@ -4,12 +4,19 @@ server:
   servlet:
     context-path: /stock-trade
   port: 8080
+  netty:
+    connection-timeout: -1
+  jetty:
+    connection-idle-timeout: -1
 
 spring:
   data:
     mongodb:
       auto-index-creation: true
       uri: mongodb://${MONGO_HOST}/seng468
+  mvc:
+    async:
+      request-timeout: -1
 
 redis:
   host: ${REDIS_HOST}
