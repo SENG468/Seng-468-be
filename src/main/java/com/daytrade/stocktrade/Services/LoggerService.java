@@ -9,7 +9,6 @@ import com.daytrade.stocktrade.Repositories.LoggerRepository;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Instant;
-import java.util.ListIterator;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -38,23 +37,10 @@ public class LoggerService {
     this.loggerRepository = loggerRepository;
   }
 
-  /**
-   * Returns all logs recorded during system run.
-   *
-   * @param pageSize
-   * @return Page object containing all logs (up to page size)F
-   */
   public Page<Logger> getAllLogs(Pageable page) {
     return loggerRepository.findAll(page);
   }
 
-  /**
-   * Gets all logs relevant to specified user.
-   *
-   * @param username - Username used to fetch logs
-   * @param pageSize - page size
-   * @return Page object containing logs of specified user.
-   */
   public Page<Logger> getByUserName(String username, Pageable page) {
     Page<Logger> results =
         loggerRepository.findByUserName(username, page).orElseThrow(EntityMissingException::new);
@@ -347,8 +333,14 @@ public class LoggerService {
     return log;
   }
 
-  private Document getLogs(String username) {
+  private Document getLogs(String username) throws ParserConfigurationException {
     Document doc = null;
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    doc = builder.newDocument();
+    Element root = doc.createElement("log");
+
+    doc.appendChild(root);
     try {
       Page<Logger> logs =
           username == null
@@ -356,32 +348,22 @@ public class LoggerService {
               : loggerRepository
                   .findByUserName(username, PageRequest.of(0, 5000))
                   .orElseThrow(EntityMissingException::new);
+      for (Logger logger : logs.getContent()) {
+        root.appendChild(createLogElement(doc, logger));
+      }
       while (logs.hasNext()) {
-        Page<Logger> nextLogs =
+        logs =
             username == null
                 ? loggerRepository.findAll(logs.nextPageable())
                 : loggerRepository
                     .findByUserName(username, logs.nextPageable())
                     .orElseThrow(EntityMissingException::new);
 
-        ListIterator<Logger> resultIterator = nextLogs.getContent().listIterator();
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        doc = builder.newDocument();
-        Element root = doc.createElement("log");
-
-        doc.appendChild(root);
-
-        try {
-          while (resultIterator.hasNext()) {
-            root.appendChild(createLogElement(doc, resultIterator.next()));
-          }
-        } catch (Exception e) {
-          throw new EntityMissingException();
+        for (Logger logger : logs.getContent()) {
+          root.appendChild(createLogElement(doc, logger));
         }
-
-        logs = nextLogs;
       }
+
     } catch (Exception e) {
       throw new EntityMissingException();
     }
