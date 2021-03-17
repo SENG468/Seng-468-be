@@ -11,8 +11,6 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.concurrent.Semaphore;
-
-import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,7 +33,8 @@ public class QuoteService {
     this.mutex = new Semaphore(1);
   }
 
-  public Quote getQuote(String userId, String stockSymbol, String transactionNumber) throws InterruptedException {
+  public Quote getQuote(String userId, String stockSymbol, String transactionNumber)
+      throws InterruptedException {
     Quote cachedQuote = cacheService.getCacheQuote(stockSymbol);
     if (cachedQuote == null) {
       Socket qsSocket = null;

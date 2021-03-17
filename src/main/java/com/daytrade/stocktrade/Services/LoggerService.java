@@ -9,8 +9,6 @@ import com.daytrade.stocktrade.Repositories.LoggerRepository;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.ListIterator;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -72,23 +70,7 @@ public class LoggerService {
         null,
         request.getFilename(),
         null);
-    List<Logger> results = getLogs(request.getUsername());
-    ListIterator<Logger> resultIterator = results.listIterator();
-
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder builder = factory.newDocumentBuilder();
-    Document doc = builder.newDocument();
-    Element root = doc.createElement("log");
-
-    doc.appendChild(root);
-
-    try {
-      while (resultIterator.hasNext()) {
-        root.appendChild(createLogElement(doc, resultIterator.next()));
-      }
-    } catch (Exception e) {
-      throw new EntityMissingException();
-    }
+    Document doc = getLogs(request.getUsername());
 
     return new StreamingResponseBody() {
       @Override
@@ -365,8 +347,8 @@ public class LoggerService {
     return log;
   }
 
-  private List<Logger> getLogs(String username) {
-    List<Logger> results = new ArrayList<>();
+  private Document getLogs(String username) {
+    Document doc = null;
     try {
       Page<Logger> logs =
           username == null
@@ -374,7 +356,6 @@ public class LoggerService {
               : loggerRepository
                   .findByUserName(username, PageRequest.of(0, 5000))
                   .orElseThrow(EntityMissingException::new);
-      List<Logger> content = new ArrayList<>(logs.getContent());
       while (logs.hasNext()) {
         Page<Logger> nextLogs =
             username == null
@@ -382,14 +363,29 @@ public class LoggerService {
                 : loggerRepository
                     .findByUserName(username, logs.nextPageable())
                     .orElseThrow(EntityMissingException::new);
-        content.addAll(nextLogs.getContent());
+
+        ListIterator<Logger> resultIterator = nextLogs.getContent().listIterator();
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        doc = builder.newDocument();
+        Element root = doc.createElement("log");
+
+        doc.appendChild(root);
+
+        try {
+          while (resultIterator.hasNext()) {
+            root.appendChild(createLogElement(doc, resultIterator.next()));
+          }
+        } catch (Exception e) {
+          throw new EntityMissingException();
+        }
+
         logs = nextLogs;
       }
-      results = content;
     } catch (Exception e) {
       throw new EntityMissingException();
     }
-    return results;
+    return doc;
   }
 
   private static Node createLogElement(Document doc, Logger log) {
