@@ -334,39 +334,13 @@ public class LoggerService {
   }
 
   private Document getLogs(String username) throws ParserConfigurationException {
-    Document doc = null;
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = factory.newDocumentBuilder();
-    doc = builder.newDocument();
+    Document doc = builder.newDocument();
     Element root = doc.createElement("log");
 
     doc.appendChild(root);
-    try {
-      Page<Logger> logs =
-          username == null
-              ? loggerRepository.findAll(PageRequest.of(0, 5000))
-              : loggerRepository
-                  .findByUserName(username, PageRequest.of(0, 5000))
-                  .orElseThrow(EntityMissingException::new);
-      for (Logger logger : logs.getContent()) {
-        root.appendChild(createLogElement(doc, logger));
-      }
-      while (logs.hasNext()) {
-        logs =
-            username == null
-                ? loggerRepository.findAll(logs.nextPageable())
-                : loggerRepository
-                    .findByUserName(username, logs.nextPageable())
-                    .orElseThrow(EntityMissingException::new);
-
-        for (Logger logger : logs.getContent()) {
-          root.appendChild(createLogElement(doc, logger));
-        }
-      }
-
-    } catch (Exception e) {
-      throw new EntityMissingException();
-    }
+    loggerRepository.findAll().stream().forEach(r -> root.appendChild(createLogElement(doc, r)));
     return doc;
   }
 

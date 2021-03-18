@@ -16,6 +16,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Transaction {
   @Id public String id;
 
+  @Indexed
   private Enums.TransactionStatus status;
 
   @NotNull @Indexed private Enums.TransactionType type;
