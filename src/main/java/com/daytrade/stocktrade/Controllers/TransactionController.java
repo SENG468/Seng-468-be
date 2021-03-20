@@ -35,9 +35,9 @@ public class TransactionController {
       throws InterruptedException {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     Map<String, Double> out = new HashMap<>();
-    loggerService.createCommandLog(name, transId, Enums.CommandType.QUOTE, stockSym, null, null);
     Double quote = transactionService.getQuote(name, stockSym, transId).getUnitPrice();
     out.put(stockSym, quote);
+    loggerService.createCommandLog(name, transId, Enums.CommandType.QUOTE, stockSym, null, null);
     return out;
   }
 
@@ -51,10 +51,12 @@ public class TransactionController {
               ? Enums.CommandType.SELL
               : Enums.CommandType.BUY;
       transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
+      Transaction newTransaction =
+          transaction.getType().equals(Enums.TransactionType.BUY)
+              ? transactionService.createSimpleBuyTransaction(transaction)
+              : transactionService.createSimpleSellTransaction(transaction);
       loggerService.createTransactionCommandLog(transaction, cmdType, null);
-      return transaction.getType().equals(Enums.TransactionType.BUY)
-          ? transactionService.createSimpleBuyTransaction(transaction)
-          : transactionService.createSimpleSellTransaction(transaction);
+      return newTransaction;
     } else {
       loggerService.createTransactionErrorLog(
           transaction, Enums.CommandType.BUY, "Incorrect transaction type");
@@ -71,8 +73,8 @@ public class TransactionController {
               ? Enums.CommandType.SET_SELL_AMOUNT
               : Enums.CommandType.SET_BUY_AMOUNT;
       transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
-      loggerService.createTransactionCommandLog(transaction, cmdType, null);
       Transaction newTransaction = transactionService.createLimitTransaction(transaction);
+      loggerService.createTransactionCommandLog(transaction, cmdType, null);
       return newTransaction;
     } else {
       loggerService.createTransactionErrorLog(
@@ -86,8 +88,6 @@ public class TransactionController {
     if (newTransaction.getType().equals(Enums.TransactionType.BUY_AT)) {
       String name = SecurityContextHolder.getContext().getAuthentication().getName();
       newTransaction.setUserName(name);
-      loggerService.createTransactionCommandLog(
-          newTransaction, Enums.CommandType.SET_BUY_TRIGGER, null);
       Command cmd = new Command();
       cmd.setTransactionId(newTransaction.getTransactionId());
       cmd.setUsername(name);
@@ -95,6 +95,8 @@ public class TransactionController {
       Transaction savedTransaction = transactionService.getPendingLimitBuyTransactions(cmd);
       Transaction updatedTransaction =
           transactionService.triggerLimitTransaction(savedTransaction, newTransaction);
+      loggerService.createTransactionCommandLog(
+          newTransaction, Enums.CommandType.SET_BUY_TRIGGER, null);
       return updatedTransaction;
     } else {
       loggerService.createTransactionErrorLog(
@@ -108,8 +110,7 @@ public class TransactionController {
     if (newTransaction.getType().equals(Enums.TransactionType.SELL_AT)) {
       String name = SecurityContextHolder.getContext().getAuthentication().getName();
       newTransaction.setUserName(name);
-      loggerService.createTransactionCommandLog(
-          newTransaction, Enums.CommandType.SET_SELL_TRIGGER, null);
+
       Command cmd = new Command();
       cmd.setTransactionId(newTransaction.getTransactionId());
       cmd.setUsername(name);
@@ -117,7 +118,8 @@ public class TransactionController {
       Transaction savedTransaction = transactionService.getPendingLimitSellTransactions(cmd);
       Transaction updatedTransaction =
           transactionService.triggerLimitTransaction(savedTransaction, newTransaction);
-
+      loggerService.createTransactionCommandLog(
+          newTransaction, Enums.CommandType.SET_SELL_TRIGGER, null);
       return updatedTransaction;
     } else {
       loggerService.createTransactionErrorLog(
@@ -133,17 +135,27 @@ public class TransactionController {
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.CANCEL_SET_SELL);
     try {
-      loggerService.createCommandLog(
-          name, cmd.getTransactionId(), cmd.getType(), stockTicker, null, null);
       Transaction savedTransaction =
           transactionService.getPendingLimitSellTransactionsByTicker(stockTicker);
       savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
       savedTransaction.setTransactionId(cmd.getTransactionId());
-      return transactionService.cancelSellLimitTransaction(savedTransaction);
+      Transaction cancelledTransaction =
+          transactionService.cancelSellLimitTransaction(savedTransaction);
+      loggerService.createCommandLog(
+          name, cmd.getTransactionId(), cmd.getType(), stockTicker, null, null);
+      return cancelledTransaction;
     } catch (EntityMissingException ex) {
       Transaction savedTransaction =
           transactionService.getCommittedLimitSellTransactionsByTicker(stockTicker, cmd);
       savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
+      loggerService.createErrorEventLog(
+          name,
+          cmd.getTransactionId(),
+          Enums.CommandType.CANCEL_SET_SELL,
+          stockTicker,
+          null,
+          null,
+          "Invalid Request");
       return transactionService.cancelSellLimitTransaction(savedTransaction);
     }
   }
@@ -155,13 +167,15 @@ public class TransactionController {
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.CANCEL_SET_BUY);
     try {
-      loggerService.createCommandLog(
-          name, cmd.getTransactionId(), cmd.getType(), stockTicker, null, null);
       Transaction savedTransaction =
           transactionService.getPendingLimitBuyTransactionsByTicker(stockTicker);
       savedTransaction.setStatus(Enums.TransactionStatus.CANCELED);
       savedTransaction.setTransactionId(cmd.getTransactionId());
-      return transactionService.cancelBuyLimitTransaction(savedTransaction);
+      Transaction cancelledTransaction =
+          transactionService.cancelBuyLimitTransaction(savedTransaction);
+      loggerService.createCommandLog(
+          name, cmd.getTransactionId(), cmd.getType(), stockTicker, null, null);
+      return cancelledTransaction;
     } catch (EntityMissingException ex) {
       Transaction savedTransaction =
           transactionService.getCommittedLimitBuyTransactionsByTicker(stockTicker, cmd);
@@ -174,10 +188,11 @@ public class TransactionController {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.CANCEL_BUY);
-    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     Transaction transaction = transactionService.getPendingBuyTransactions(cmd);
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
-    return transactionService.cancelTransaction(transaction);
+    Transaction cancelledTransaction = transactionService.cancelTransaction(transaction);
+    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
+    return cancelledTransaction;
   }
 
   @PostMapping("/sell/cancel")
@@ -185,10 +200,11 @@ public class TransactionController {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.CANCEL_SELL);
-    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     Transaction transaction = transactionService.getPendingSellTransactions(cmd);
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
-    return transactionService.cancelTransaction(transaction);
+    Transaction cancelledTransaction = transactionService.cancelTransaction(transaction);
+    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
+    return cancelledTransaction;
   }
 
   @PostMapping("/sell/commit")
@@ -196,9 +212,9 @@ public class TransactionController {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.COMMIT_SELL);
-    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     Transaction transaction = transactionService.getPendingSellTransactions(cmd);
     transaction = transactionService.commitSimpleOrder(transaction);
+    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     transactionService.updateAccount(transaction);
     return transaction;
   }
@@ -208,9 +224,9 @@ public class TransactionController {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.COMMIT_BUY);
-    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     Transaction transaction = transactionService.getPendingBuyTransactions(cmd);
     transaction = transactionService.commitSimpleOrder(transaction);
+    loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     return transactionService.updateAccount(transaction);
   }
 }
