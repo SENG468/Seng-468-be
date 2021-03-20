@@ -6,6 +6,7 @@ import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Transaction;
+import com.daytrade.stocktrade.Models.Transactions.PendingTransaction;
 import com.daytrade.stocktrade.Services.LoggerService;
 import com.daytrade.stocktrade.Services.TransactionService;
 import java.util.HashMap;
@@ -41,7 +42,7 @@ public class TransactionController {
   }
 
   @PostMapping("/order/simple")
-  public Transaction createSimpleOrder(@Valid @RequestBody Transaction transaction)
+  public Transaction createSimpleOrder(@Valid @RequestBody PendingTransaction transaction)
       throws Exception {
     if (transaction.getType().equals(Enums.TransactionType.SELL)
         || transaction.getType().equals(Enums.TransactionType.BUY)) {
@@ -62,7 +63,7 @@ public class TransactionController {
   }
 
   @PostMapping("/order/limit")
-  public Transaction createLimitOrder(@Valid @RequestBody Transaction transaction) {
+  public Transaction createLimitOrder(@Valid @RequestBody PendingTransaction transaction) {
     if (transaction.getType().equals(Enums.TransactionType.SELL_AT)
         || transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
       Enums.CommandType cmdType =
