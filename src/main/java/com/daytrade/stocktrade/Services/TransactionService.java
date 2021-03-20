@@ -7,6 +7,8 @@ import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Quote;
 import com.daytrade.stocktrade.Models.Transaction;
+import com.daytrade.stocktrade.Models.Transactions.PendingTransaction;
+import com.daytrade.stocktrade.Repositories.PendingTransactionRepository;
 import com.daytrade.stocktrade.Repositories.TransactionRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -22,17 +24,20 @@ public class TransactionService {
   private final AccountService accountService;
   private final LoggerService loggerService;
   private final QuoteService quoteService;
+  private final PendingTransactionRepository pendingTransactionRepository;
 
   public TransactionService(
       TransactionRepository transactionRepository,
       AccountService accountService,
       LoggerService loggerService,
-      QuoteService quoteService) {
+      QuoteService quoteService,
+      PendingTransactionRepository pendingTransactionRepository) {
 
     this.transactionRepository = transactionRepository;
     this.accountService = accountService;
     this.loggerService = loggerService;
     this.quoteService = quoteService;
+    this.pendingTransactionRepository = pendingTransactionRepository;
   }
 
   public Quote getQuote(String userId, String stockSymbol, String transId)
@@ -40,7 +45,7 @@ public class TransactionService {
     return quoteService.getQuote(userId, stockSymbol, transId);
   }
 
-  public Transaction createSimpleBuyTransaction(Transaction transaction)
+  public Transaction createSimpleBuyTransaction(PendingTransaction transaction)
       throws InterruptedException {
     transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
     double quote =
@@ -68,15 +73,15 @@ public class TransactionService {
   }
 
   private Transaction createSimpleTransaction(
-      Transaction transaction, double quote, long stockAmount) {
+      PendingTransaction transaction, double quote, long stockAmount) {
     transaction.setUnitPrice(quote);
     transaction.setCashAmount(quote * stockAmount);
     transaction.setStockAmount(stockAmount);
     transaction.setStatus(Enums.TransactionStatus.PENDING);
-    return transactionRepository.save(transaction);
+    return pendingTransactionRepository.save(transaction);
   }
 
-  public Transaction createSimpleSellTransaction(Transaction transaction)
+  public Transaction createSimpleSellTransaction(PendingTransaction transaction)
       throws InterruptedException {
     transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
     double quote =
@@ -115,8 +120,8 @@ public class TransactionService {
   public void expireOrders() {
     // Get All transactions created but not confirmed more than a minute ago
     List<Transaction> expiredTransactions =
-        transactionRepository.findAllByStatusAndCreatedDateBefore(
-            Enums.TransactionStatus.PENDING, Instant.now().minus(1, ChronoUnit.MINUTES));
+        pendingTransactionRepository.findAllByCreatedDateBefore(
+            Instant.now().minus(1, ChronoUnit.MINUTES));
     for (Transaction transaction : expiredTransactions) {
       // Cancel Simple transactions. No refunds needed
       if (transaction.getType().equals(Enums.TransactionType.BUY)
@@ -147,8 +152,8 @@ public class TransactionService {
   public Transaction getPendingSellTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> sellTransactions =
-        transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
-            userName, Enums.TransactionType.SELL, Enums.TransactionStatus.PENDING);
+        pendingTransactionRepository.findByUserNameAndTypeOrderByCreatedDate(
+            userName, Enums.TransactionType.SELL);
     if (sellTransactions.size() < 1) {
       loggerService.createErrorEventLog(
           cmd.getUsername(),
@@ -168,8 +173,8 @@ public class TransactionService {
   public Transaction getPendingBuyTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> buyTransactions =
-        transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
-            userName, Enums.TransactionType.BUY, Enums.TransactionStatus.PENDING);
+        pendingTransactionRepository.findByUserNameAndTypeOrderByCreatedDate(
+            userName, Enums.TransactionType.BUY);
     if (buyTransactions.size() < 1) {
       loggerService.createErrorEventLog(
           cmd.getUsername(),
@@ -189,8 +194,8 @@ public class TransactionService {
   public Transaction getPendingLimitBuyTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> buyTransactions =
-        transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
-            userName, Enums.TransactionType.BUY_AT, Enums.TransactionStatus.PENDING);
+        pendingTransactionRepository.findByUserNameAndTypeOrderByCreatedDate(
+            userName, Enums.TransactionType.BUY_AT);
     if (buyTransactions.size() < 1) {
       loggerService.createErrorEventLog(
           cmd.getUsername(),
@@ -210,8 +215,8 @@ public class TransactionService {
   public Transaction getPendingLimitSellTransactionsByTicker(String stockTicker) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> sellTransactions =
-        transactionRepository.findByUserNameAndTypeAndStatusAndStockCodeOrderByCreatedDate(
-            userName, Enums.TransactionType.SELL_AT, Enums.TransactionStatus.PENDING, stockTicker);
+        pendingTransactionRepository.findByUserNameAndTypeAndStockCodeOrderByCreatedDate(
+            userName, Enums.TransactionType.SELL_AT, stockTicker);
     if (sellTransactions.size() < 1) {
       throw new EntityMissingException();
     }
@@ -245,8 +250,8 @@ public class TransactionService {
   public Transaction getPendingLimitBuyTransactionsByTicker(String stockTicker) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> sellTransactions =
-        transactionRepository.findByUserNameAndTypeAndStatusAndStockCodeOrderByCreatedDate(
-            userName, Enums.TransactionType.BUY_AT, Enums.TransactionStatus.PENDING, stockTicker);
+        pendingTransactionRepository.findByUserNameAndTypeAndStockCodeOrderByCreatedDate(
+            userName, Enums.TransactionType.BUY_AT, stockTicker);
     if (sellTransactions.size() < 1) {
       throw new EntityMissingException();
     }
@@ -277,8 +282,8 @@ public class TransactionService {
   public Transaction getPendingLimitSellTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
     List<Transaction> sellTransactions =
-        transactionRepository.findByUserNameAndTypeAndStatusOrderByCreatedDate(
-            userName, Enums.TransactionType.SELL_AT, Enums.TransactionStatus.PENDING);
+        pendingTransactionRepository.findByUserNameAndTypeOrderByCreatedDate(
+            userName, Enums.TransactionType.SELL_AT);
     if (sellTransactions.size() < 1) {
       loggerService.createErrorEventLog(
           cmd.getUsername(),
@@ -347,14 +352,14 @@ public class TransactionService {
     return transactionRepository.save(transaction);
   }
 
-  public Transaction createLimitTransaction(Transaction transaction) {
+  public Transaction createLimitTransaction(PendingTransaction transaction) {
     transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
     transaction.setStatus(Enums.TransactionStatus.PENDING);
     if (transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
       // Remove the stock from the portfolio while the order is active
       removeStockForHold(transaction.getStockAmount(), transaction);
     }
-    return transactionRepository.save(transaction);
+    return pendingTransactionRepository.save(transaction);
   }
 
   public Transaction triggerLimitTransaction(
