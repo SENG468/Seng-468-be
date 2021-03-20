@@ -341,8 +341,7 @@ public class LoggerService {
 
     doc.appendChild(root);
 
-    loggerRepository.findAll().forEach(r -> root.appendChild(createLogElement(doc, r)));
-
+    loggerRepository.findAll().stream().forEach(r -> root.appendChild(createLogElement(doc, r)));
     return doc;
   }
 
