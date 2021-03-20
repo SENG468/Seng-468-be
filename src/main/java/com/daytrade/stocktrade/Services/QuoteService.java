@@ -12,7 +12,6 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import java.util.concurrent.Semaphore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,9 +20,8 @@ public class QuoteService {
 
   private final LoggerService loggerService;
   private final CacheService cacheService;
-  private final Semaphore mutex = new Semaphore(1);
   // This locks through the redis to support multiple servers
-  //private final RLock mutex;
+  private final RLock mutex;
   private static double delay = 50;
 
   @Autowired
@@ -31,7 +29,7 @@ public class QuoteService {
       LoggerService loggerService, CacheService cacheService, RedissonClient redissonClient) {
     this.loggerService = loggerService;
     this.cacheService = cacheService;
-    //this.mutex = redissonClient.getLock("quote-service-lock");
+    this.mutex = redissonClient.getLock("quote-service-lock");
   }
 
   public Quote getQuote(String userId, String stockSymbol, String transactionNumber)
@@ -41,8 +39,7 @@ public class QuoteService {
       Socket qsSocket = null;
       PrintWriter out = null;
       BufferedReader in = null;
-      //mutex.lock();
-      mutex.acquire();
+      mutex.lock();
       try {
         qsSocket = new Socket("192.168.4.2", 4442);
         out = new PrintWriter(qsSocket.getOutputStream(), true);
@@ -92,8 +89,7 @@ public class QuoteService {
           delay = 8;
         }
         Thread.sleep((long) delay);
-        mutex.release();
-        //mutex.unlock();
+        mutex.unlock();
         String fromServer = "";
         if (in != null) {
           fromServer = in.readLine();
@@ -147,7 +143,6 @@ public class QuoteService {
             null,
             null,
             "Error: " + e.getMessage());
-        System.out.print(e.getMessage());
         throw new BadRequestException("Big Bad");
       }
     }
