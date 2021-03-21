@@ -100,8 +100,8 @@ public class TransactionService {
     long stockAmount = (long) (transaction.getCashAmount() / quote);
     if (stockAmount < 1) {
       loggerService.createTransactionErrorLog(
-          transaction, Enums.CommandType.SELL, "Simple sell - Stock price too high");
-      throw new BadRequestException("Stock price too high");
+          transaction, Enums.CommandType.SELL, "Simple sell - Not enough stock");
+      throw new BadRequestException("Not enough stock");
     }
     if (account.getPortfolio().get(transaction.getStockCode()) < stockAmount) {
       loggerService.createTransactionErrorLog(

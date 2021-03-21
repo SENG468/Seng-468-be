@@ -20,7 +20,6 @@ public class QuoteService {
 
   private final LoggerService loggerService;
   private final CacheService cacheService;
-
   // This locks through the redis to support multiple servers
   private final RLock mutex;
   private static double delay = 50;
