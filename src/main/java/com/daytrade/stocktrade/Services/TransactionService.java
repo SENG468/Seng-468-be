@@ -112,14 +112,15 @@ public class TransactionService {
   }
 
   // Make sure to change status to committed or filled here
-  public Transaction commitSimpleOrder(Transaction transaction) {
+  public Transaction commitSimpleOrder(PendingTransaction transaction) {
+    pendingTransactionRepository.delete(transaction);
     transaction.setStatus(Enums.TransactionStatus.FILLED);
     return transactionRepository.save(transaction);
   }
 
   public void expireOrders() {
     // Get All transactions created but not confirmed more than a minute ago
-    List<Transaction> expiredTransactions =
+    List<PendingTransaction> expiredTransactions =
         pendingTransactionRepository.findAllByCreatedDateBefore(
             Instant.now().minus(1, ChronoUnit.MINUTES));
     for (Transaction transaction : expiredTransactions) {
@@ -149,9 +150,9 @@ public class TransactionService {
     transactionRepository.saveAll(expiredTransactions);
   }
 
-  public Transaction getPendingSellTransactions(Command cmd) {
+  public PendingTransaction getPendingSellTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    List<Transaction> sellTransactions =
+    List<PendingTransaction> sellTransactions =
         pendingTransactionRepository.findByUserNameAndTypeOrderByCreatedDate(
             userName, Enums.TransactionType.SELL);
     if (sellTransactions.size() < 1) {
@@ -165,14 +166,14 @@ public class TransactionService {
           "No open sell requests.");
       throw new EntityMissingException();
     }
-    Transaction recentTransaction = sellTransactions.get(0);
+    PendingTransaction recentTransaction = sellTransactions.get(0);
     recentTransaction.setTransactionId(cmd.getTransactionId());
     return recentTransaction;
   }
 
-  public Transaction getPendingBuyTransactions(Command cmd) {
+  public PendingTransaction getPendingBuyTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    List<Transaction> buyTransactions =
+    List<PendingTransaction> buyTransactions =
         pendingTransactionRepository.findByUserNameAndTypeOrderByCreatedDate(
             userName, Enums.TransactionType.BUY);
     if (buyTransactions.size() < 1) {
@@ -186,14 +187,14 @@ public class TransactionService {
           "No open buy requests.");
       throw new EntityMissingException();
     }
-    Transaction recentTransaction = buyTransactions.get(0);
+    PendingTransaction recentTransaction = buyTransactions.get(0);
     recentTransaction.setTransactionId(cmd.getTransactionId());
     return recentTransaction;
   }
 
-  public Transaction getPendingLimitBuyTransactions(Command cmd) {
+  public PendingTransaction getPendingLimitBuyTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    List<Transaction> buyTransactions =
+    List<PendingTransaction> buyTransactions =
         pendingTransactionRepository.findByUserNameAndTypeOrderByCreatedDate(
             userName, Enums.TransactionType.BUY_AT);
     if (buyTransactions.size() < 1) {
@@ -207,14 +208,14 @@ public class TransactionService {
           "No open buy triggers.");
       throw new EntityMissingException();
     }
-    Transaction recentTransaction = buyTransactions.get(0);
+    PendingTransaction recentTransaction = buyTransactions.get(0);
     recentTransaction.setTransactionId(cmd.getTransactionId());
     return recentTransaction;
   }
 
   public Transaction getPendingLimitSellTransactionsByTicker(String stockTicker) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    List<Transaction> sellTransactions =
+    List<PendingTransaction> sellTransactions =
         pendingTransactionRepository.findByUserNameAndTypeAndStockCodeOrderByCreatedDate(
             userName, Enums.TransactionType.SELL_AT, stockTicker);
     if (sellTransactions.size() < 1) {
@@ -249,7 +250,7 @@ public class TransactionService {
 
   public Transaction getPendingLimitBuyTransactionsByTicker(String stockTicker) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    List<Transaction> sellTransactions =
+    List<PendingTransaction> sellTransactions =
         pendingTransactionRepository.findByUserNameAndTypeAndStockCodeOrderByCreatedDate(
             userName, Enums.TransactionType.BUY_AT, stockTicker);
     if (sellTransactions.size() < 1) {
@@ -279,9 +280,9 @@ public class TransactionService {
     return recentTransaction;
   }
 
-  public Transaction getPendingLimitSellTransactions(Command cmd) {
+  public PendingTransaction getPendingLimitSellTransactions(Command cmd) {
     String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-    List<Transaction> sellTransactions =
+    List<PendingTransaction> sellTransactions =
         pendingTransactionRepository.findByUserNameAndTypeOrderByCreatedDate(
             userName, Enums.TransactionType.SELL_AT);
     if (sellTransactions.size() < 1) {
@@ -295,7 +296,7 @@ public class TransactionService {
           "No open sell triggers.");
       throw new EntityMissingException();
     }
-    Transaction recentTransaction = sellTransactions.get(0);
+    PendingTransaction recentTransaction = sellTransactions.get(0);
     recentTransaction.setTransactionId(cmd.getTransactionId());
     return recentTransaction;
   }
@@ -363,7 +364,7 @@ public class TransactionService {
   }
 
   public Transaction triggerLimitTransaction(
-      Transaction savedTransaction, Transaction newTransaction) {
+      PendingTransaction savedTransaction, Transaction newTransaction) {
     savedTransaction.setUnitPrice(newTransaction.getUnitPrice());
     savedTransaction.setCashAmount(
         savedTransaction.getUnitPrice() * savedTransaction.getStockAmount());
@@ -372,7 +373,7 @@ public class TransactionService {
       // Remove the money from the account while the order is committed
       removeMoneyForHold(savedTransaction.getCashAmount(), savedTransaction);
     }
-
+    pendingTransactionRepository.delete(savedTransaction);
     return transactionRepository.save(savedTransaction);
   }
 

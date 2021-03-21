@@ -92,7 +92,7 @@ public class TransactionController {
       cmd.setTransactionId(newTransaction.getTransactionId());
       cmd.setUsername(name);
       cmd.setType(Enums.CommandType.SET_BUY_TRIGGER);
-      Transaction savedTransaction = transactionService.getPendingLimitBuyTransactions(cmd);
+      PendingTransaction savedTransaction = transactionService.getPendingLimitBuyTransactions(cmd);
       Transaction updatedTransaction =
           transactionService.triggerLimitTransaction(savedTransaction, newTransaction);
       loggerService.createTransactionCommandLog(
@@ -115,7 +115,7 @@ public class TransactionController {
       cmd.setTransactionId(newTransaction.getTransactionId());
       cmd.setUsername(name);
       cmd.setType(Enums.CommandType.SET_SELL_TRIGGER);
-      Transaction savedTransaction = transactionService.getPendingLimitSellTransactions(cmd);
+      PendingTransaction savedTransaction = transactionService.getPendingLimitSellTransactions(cmd);
       Transaction updatedTransaction =
           transactionService.triggerLimitTransaction(savedTransaction, newTransaction);
       loggerService.createTransactionCommandLog(
@@ -212,11 +212,11 @@ public class TransactionController {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.COMMIT_SELL);
-    Transaction transaction = transactionService.getPendingSellTransactions(cmd);
-    transaction = transactionService.commitSimpleOrder(transaction);
+    PendingTransaction transaction = transactionService.getPendingSellTransactions(cmd);
+    Transaction commitedTransaction = transactionService.commitSimpleOrder(transaction);
     loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
     transactionService.updateAccount(transaction);
-    return transaction;
+    return commitedTransaction;
   }
 
   @PostMapping("/buy/commit")
@@ -224,9 +224,9 @@ public class TransactionController {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.COMMIT_BUY);
-    Transaction transaction = transactionService.getPendingBuyTransactions(cmd);
-    transaction = transactionService.commitSimpleOrder(transaction);
+    PendingTransaction transaction = transactionService.getPendingBuyTransactions(cmd);
+    Transaction committedTransaction = transactionService.commitSimpleOrder(transaction);
     loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
-    return transactionService.updateAccount(transaction);
+    return transactionService.updateAccount(committedTransaction);
   }
 }
