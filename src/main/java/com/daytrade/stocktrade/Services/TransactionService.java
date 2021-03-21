@@ -48,12 +48,12 @@ public class TransactionService {
   public Transaction createSimpleBuyTransaction(PendingTransaction transaction)
       throws InterruptedException {
     transaction.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
-    double quote = 20;
-    //        getQuote(
-    //                transaction.getUserName(),
-    //                transaction.getStockCode(),
-    //                transaction.getTransactionId())
-    //            .getUnitPrice();
+    double quote =
+        getQuote(
+                transaction.getUserName(),
+                transaction.getStockCode(),
+                transaction.getTransactionId())
+            .getUnitPrice();
     Account account = accountService.getByName(transaction.getUserName());
 
     if (transaction.getCashAmount() == null) {
