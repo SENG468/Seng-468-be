@@ -147,7 +147,13 @@ public class TransactionService {
             transaction, Enums.CommandType.CANCEL_SELL, null);
       }
     }
-    transactionRepository.saveAll(expiredTransactions);
+    pendingTransactionRepository.deleteAll(expiredTransactions);
+    expiredTransactions.stream()
+        .forEach(
+            t -> {
+              t.setId(null);
+              transactionRepository.save(t);
+            });
   }
 
   public PendingTransaction getPendingSellTransactions(Command cmd) {
