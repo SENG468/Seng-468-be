@@ -10,7 +10,6 @@ public class SecurityConsts {
   public static final String AUTH_HEADER_PREFIX = "Bearer ";
   public static String SECRET;
   public static long EXPIRY;
-  public static String AUTH_HEADER;
 
   @Autowired
   public void loadConfig(
