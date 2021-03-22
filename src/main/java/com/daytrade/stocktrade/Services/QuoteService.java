@@ -13,6 +13,7 @@ import java.time.Instant;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,16 +21,21 @@ public class QuoteService {
 
   private final LoggerService loggerService;
   private final CacheService cacheService;
+  private final String debug;
   // This locks through the redis to support multiple servers
   private final RLock mutex;
   private static double delay = 50;
 
   @Autowired
   public QuoteService(
-      LoggerService loggerService, CacheService cacheService, RedissonClient redissonClient) {
+      LoggerService loggerService,
+      CacheService cacheService,
+      RedissonClient redissonClient,
+      @Value("${security.debug}") String debug) {
     this.loggerService = loggerService;
     this.cacheService = cacheService;
     this.mutex = redissonClient.getLock("quote-service-lock");
+    this.debug = debug;
   }
 
   public Quote getQuote(String userId, String stockSymbol, String transactionNumber)
@@ -146,13 +152,15 @@ public class QuoteService {
         throw new BadRequestException("Big Bad");
       }
     }
-    loggerService.createSystemEventLog(
-        userId,
-        transactionNumber,
-        Enums.CommandType.QUOTE,
-        stockSymbol,
-        null,
-        cachedQuote.getUnitPrice());
+    if (this.debug == "true")
+      loggerService.createSystemEventLog(
+          userId,
+          transactionNumber,
+          Enums.CommandType.QUOTE,
+          stockSymbol,
+          null,
+          cachedQuote.getUnitPrice());
+
     return cachedQuote;
   }
 
