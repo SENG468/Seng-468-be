@@ -21,7 +21,7 @@ public class QuoteService {
 
   private final LoggerService loggerService;
   private final CacheService cacheService;
-  private final String debug;
+  private final Boolean debug;
   // This locks through the redis to support multiple servers
   private final RLock mutex;
   private static double delay = 50;
@@ -31,7 +31,7 @@ public class QuoteService {
       LoggerService loggerService,
       CacheService cacheService,
       RedissonClient redissonClient,
-      @Value("${security.debug}") String debug) {
+      @Value("${security.debug}") Boolean debug) {
     this.loggerService = loggerService;
     this.cacheService = cacheService;
     this.mutex = redissonClient.getLock("quote-service-lock");
@@ -152,7 +152,7 @@ public class QuoteService {
         throw new BadRequestException("Big Bad");
       }
     }
-    if (this.debug == "true")
+    if (this.debug)
       loggerService.createSystemEventLog(
           userId,
           transactionNumber,

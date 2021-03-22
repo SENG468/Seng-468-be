@@ -26,7 +26,7 @@ public class TransactionService {
   private final LoggerService loggerService;
   private final QuoteService quoteService;
   private final PendingTransactionRepository pendingTransactionRepository;
-  private final String debug;
+  private final Boolean debug;
 
   public TransactionService(
       TransactionRepository transactionRepository,
@@ -34,7 +34,7 @@ public class TransactionService {
       LoggerService loggerService,
       QuoteService quoteService,
       PendingTransactionRepository pendingTransactionRepository,
-      @Value("${security.debug}") String debug) {
+      @Value("${security.debug}") Boolean debug) {
 
     this.transactionRepository = transactionRepository;
     this.accountService = accountService;
@@ -323,7 +323,7 @@ public class TransactionService {
         account.setBalance(
             account.getBalance() - transaction.getUnitPrice() * transaction.getStockAmount());
 
-        if (this.debug == "true")
+        if (this.debug)
           loggerService.createAccountTransactionLog(
               transaction.getUserName(),
               transaction.getTransactionId(),
@@ -351,7 +351,7 @@ public class TransactionService {
       double newMoney =
           account.getBalance() + transaction.getUnitPrice() * transaction.getStockAmount();
       account.setBalance(newMoney);
-      if (this.debug == "true")
+      if (this.debug)
         loggerService.createAccountTransactionLog(
             transaction.getUserName(),
             transaction.getTransactionId(),
@@ -413,7 +413,7 @@ public class TransactionService {
     }
     account.setBalance(account.getBalance() - cashAmount);
 
-    if (this.debug == "true")
+    if (this.debug)
       loggerService.createAccountTransactionLog(
           transaction.getUserName(), transaction.getTransactionId(), "remove", cashAmount);
 
@@ -430,7 +430,7 @@ public class TransactionService {
     Account account = accountService.getByName(transaction.getUserName());
     if (transaction.getStatus().equals(Enums.TransactionStatus.COMMITTED)) {
       account.setBalance(account.getBalance() + transaction.getCashAmount());
-      if (this.debug == "true")
+      if (this.debug)
         loggerService.createAccountTransactionLog(
             transaction.getUserName(),
             transaction.getTransactionId(),
@@ -491,7 +491,7 @@ public class TransactionService {
     Account account = accountService.getByName(order.getUserName());
     account.setBalance(account.getBalance() + refund);
 
-    if (this.debug == "true")
+    if (this.debug)
       loggerService.createAccountTransactionLog(
           order.getUserName(), order.getTransactionId(), "add", refund);
 

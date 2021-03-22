@@ -23,14 +23,14 @@ public class AccountService {
   private final AccountRepository accountRepository;
   private final TransactionRepository transactionRepository;
   private final LoggerService loggerService;
-  private final String debug;
+  private final Boolean debug;
 
   @Autowired
   public AccountService(
       AccountRepository accountRepository,
       LoggerService loggerService,
       TransactionRepository transactionRepository,
-      @Value("${security.debug}") String debug) {
+      @Value("${security.debug}") Boolean debug) {
     this.accountRepository = accountRepository;
     this.loggerService = loggerService;
     this.transactionRepository = transactionRepository;
@@ -59,7 +59,7 @@ public class AccountService {
     transaction.setStatus(Enums.TransactionStatus.FILLED);
     transactionRepository.save(transaction);
 
-    if (this.debug == "true")
+    if (this.debug)
       loggerService.createAccountTransactionLog(
           name, request.getTransactionId(), "add", request.getBalance());
 
