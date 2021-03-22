@@ -18,3 +18,5 @@ security:
   #  One day in MS
   expiry-ms: 86400000
   secret: ${JWT_SECRET}
+  server-name: ${SERVER_NAME}
+  debug: ${DEBUG_LOG}

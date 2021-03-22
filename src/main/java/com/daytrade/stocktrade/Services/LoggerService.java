@@ -19,6 +19,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,9 +32,13 @@ import org.w3c.dom.Node;
 public class LoggerService {
   private final LoggerRepository loggerRepository;
 
+  private final String serverName;
+
   @Autowired
-  public LoggerService(LoggerRepository loggerRepository) {
+  public LoggerService(
+      LoggerRepository loggerRepository, @Value("${security.server-name}") String serverName) {
     this.loggerRepository = loggerRepository;
+    this.serverName = serverName;
   }
 
   public Page<Logger> getAllLogs(Pageable page) {
@@ -196,7 +201,8 @@ public class LoggerService {
   public Logger createAccountTransactionLog(
       String user, String transactionNumber, String action, Double funds) {
     String finalTransactionNum = transactionNumber != null ? transactionNumber : "1";
-    Logger log = new Logger(Enums.LogType.AccountTransactionType, finalTransactionNum, "Pfilbert");
+    Logger log =
+        new Logger(Enums.LogType.AccountTransactionType, finalTransactionNum, this.serverName);
     log.setUserName(user);
     log.setAction(action);
     log.setFunds(funds);
@@ -322,7 +328,7 @@ public class LoggerService {
       String filename,
       Double funds,
       String message) {
-    Logger log = new Logger(logType, transactionNumber, "Pfilbert");
+    Logger log = new Logger(logType, transactionNumber, this.serverName);
     if (user != null) log.setUserName(user);
     if (commandType != null) log.setCommandType(commandType);
     if (stockSymbol != null) log.setStockSymbol(stockSymbol);
