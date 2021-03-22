@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -22,15 +23,18 @@ public class AccountService {
   private final AccountRepository accountRepository;
   private final TransactionRepository transactionRepository;
   private final LoggerService loggerService;
+  private final Boolean debug;
 
   @Autowired
   public AccountService(
       AccountRepository accountRepository,
       LoggerService loggerService,
-      TransactionRepository transactionRepository) {
+      TransactionRepository transactionRepository,
+      @Value("${security.debug}") Boolean debug) {
     this.accountRepository = accountRepository;
     this.loggerService = loggerService;
     this.transactionRepository = transactionRepository;
+    this.debug = debug;
   }
 
   public Account addFundsToAccount(Account request) throws EntityMissingException {
@@ -55,8 +59,10 @@ public class AccountService {
     transaction.setStatus(Enums.TransactionStatus.FILLED);
     transactionRepository.save(transaction);
 
-    loggerService.createAccountTransactionLog(
-        name, request.getTransactionId(), "add", request.getBalance());
+    if (this.debug)
+      loggerService.createAccountTransactionLog(
+          name, request.getTransactionId(), "add", request.getBalance());
+
     account.setName(name);
     return accountRepository.save(account);
   }

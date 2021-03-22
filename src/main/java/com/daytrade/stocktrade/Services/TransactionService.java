@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -25,19 +26,22 @@ public class TransactionService {
   private final LoggerService loggerService;
   private final QuoteService quoteService;
   private final PendingTransactionRepository pendingTransactionRepository;
+  private final Boolean debug;
 
   public TransactionService(
       TransactionRepository transactionRepository,
       AccountService accountService,
       LoggerService loggerService,
       QuoteService quoteService,
-      PendingTransactionRepository pendingTransactionRepository) {
+      PendingTransactionRepository pendingTransactionRepository,
+      @Value("${security.debug}") Boolean debug) {
 
     this.transactionRepository = transactionRepository;
     this.accountService = accountService;
     this.loggerService = loggerService;
     this.quoteService = quoteService;
     this.pendingTransactionRepository = pendingTransactionRepository;
+    this.debug = debug;
   }
 
   public Quote getQuote(String userId, String stockSymbol, String transId)
@@ -318,11 +322,13 @@ public class TransactionService {
       if (!transaction.getType().equals(Enums.TransactionType.BUY_AT)) {
         account.setBalance(
             account.getBalance() - transaction.getUnitPrice() * transaction.getStockAmount());
-        loggerService.createAccountTransactionLog(
-            transaction.getUserName(),
-            transaction.getTransactionId(),
-            "remove",
-            transaction.getUnitPrice() * transaction.getStockAmount());
+
+        if (this.debug)
+          loggerService.createAccountTransactionLog(
+              transaction.getUserName(),
+              transaction.getTransactionId(),
+              "remove",
+              transaction.getUnitPrice() * transaction.getStockAmount());
       }
       // Update portfolio with new stock counts
       long stockAmount;
@@ -345,11 +351,12 @@ public class TransactionService {
       double newMoney =
           account.getBalance() + transaction.getUnitPrice() * transaction.getStockAmount();
       account.setBalance(newMoney);
-      loggerService.createAccountTransactionLog(
-          transaction.getUserName(),
-          transaction.getTransactionId(),
-          "add",
-          transaction.getUnitPrice() * transaction.getStockAmount());
+      if (this.debug)
+        loggerService.createAccountTransactionLog(
+            transaction.getUserName(),
+            transaction.getTransactionId(),
+            "add",
+            transaction.getUnitPrice() * transaction.getStockAmount());
     }
     return accountService.save(account);
   }
@@ -405,8 +412,11 @@ public class TransactionService {
       throw new BadRequestException("You cannot afford this");
     }
     account.setBalance(account.getBalance() - cashAmount);
-    loggerService.createAccountTransactionLog(
-        transaction.getUserName(), transaction.getTransactionId(), "remove", cashAmount);
+
+    if (this.debug)
+      loggerService.createAccountTransactionLog(
+          transaction.getUserName(), transaction.getTransactionId(), "remove", cashAmount);
+
     return accountService.save(account);
   }
 
@@ -420,11 +430,12 @@ public class TransactionService {
     Account account = accountService.getByName(transaction.getUserName());
     if (transaction.getStatus().equals(Enums.TransactionStatus.COMMITTED)) {
       account.setBalance(account.getBalance() + transaction.getCashAmount());
-      loggerService.createAccountTransactionLog(
-          transaction.getUserName(),
-          transaction.getTransactionId(),
-          "add",
-          transaction.getCashAmount());
+      if (this.debug)
+        loggerService.createAccountTransactionLog(
+            transaction.getUserName(),
+            transaction.getTransactionId(),
+            "add",
+            transaction.getCashAmount());
       accountService.save(account);
     }
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
@@ -479,8 +490,11 @@ public class TransactionService {
     double refund = order.getCashAmount() - newBuyPrice;
     Account account = accountService.getByName(order.getUserName());
     account.setBalance(account.getBalance() + refund);
-    loggerService.createAccountTransactionLog(
-        order.getUserName(), order.getTransactionId(), "add", refund);
+
+    if (this.debug)
+      loggerService.createAccountTransactionLog(
+          order.getUserName(), order.getTransactionId(), "add", refund);
+
     return accountService.save(account);
   }
 }
