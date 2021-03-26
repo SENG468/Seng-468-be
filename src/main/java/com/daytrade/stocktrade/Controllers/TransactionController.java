@@ -208,15 +208,14 @@ public class TransactionController {
   }
 
   @PostMapping("/sell/commit")
-  public Transaction commitSimpleSellOrder(@Valid @RequestBody Command cmd) {
+  public Account commitSimpleSellOrder(@Valid @RequestBody Command cmd) {
     String name = SecurityContextHolder.getContext().getAuthentication().getName();
     cmd.setUsername(name);
     cmd.setType(Enums.CommandType.COMMIT_SELL);
     PendingTransaction transaction = transactionService.getPendingSellTransactions(cmd);
     Transaction commitedTransaction = transactionService.commitSimpleOrder(transaction);
     loggerService.createCommandLog(name, cmd.getTransactionId(), cmd.getType(), null, null, null);
-    transactionService.updateAccount(transaction);
-    return commitedTransaction;
+    return transactionService.updateAccount(commitedTransaction);
   }
 
   @PostMapping("/buy/commit")
