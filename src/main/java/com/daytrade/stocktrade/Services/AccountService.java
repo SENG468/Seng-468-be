@@ -6,10 +6,10 @@ import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Summary;
 import com.daytrade.stocktrade.Models.Transaction;
+import com.daytrade.stocktrade.Models.Transactions.PendingTransaction;
 import com.daytrade.stocktrade.Repositories.AccountRepository;
+import com.daytrade.stocktrade.Repositories.PendingTransactionRepository;
 import com.daytrade.stocktrade.Repositories.TransactionRepository;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,7 @@ public class AccountService {
 
   private final AccountRepository accountRepository;
   private final TransactionRepository transactionRepository;
+  private final PendingTransactionRepository pendingTransactionRepository;
   private final LoggerService loggerService;
   private final Boolean debug;
 
@@ -30,10 +31,12 @@ public class AccountService {
       AccountRepository accountRepository,
       LoggerService loggerService,
       TransactionRepository transactionRepository,
+      PendingTransactionRepository pendingTransactionRepository,
       @Value("${security.debug}") Boolean debug) {
     this.accountRepository = accountRepository;
     this.loggerService = loggerService;
     this.transactionRepository = transactionRepository;
+    this.pendingTransactionRepository = pendingTransactionRepository;
     this.debug = debug;
   }
 
@@ -90,25 +93,12 @@ public class AccountService {
 
   public Summary generateSummary(String username) throws EntityMissingException {
     Account summaryAccount = getByName(username);
-    List<Enums.TransactionStatus> status = new ArrayList<>();
-    List<Enums.TransactionType> type = new ArrayList<>();
-    status.add(Enums.TransactionStatus.PENDING);
-    type.addAll(Arrays.asList(Enums.TransactionType.BUY_AT, Enums.TransactionType.SELL_AT));
-    List<Transaction> pendingTriggers =
-        transactionRepository.findByUserNameAndStatusInAndTypeInOrderByCreatedDate(
-            username, status, type);
 
-    status.remove(Enums.TransactionStatus.PENDING);
-    status.addAll(
-        Arrays.asList(
-            Enums.TransactionStatus.CANCELED,
-            Enums.TransactionStatus.COMMITTED,
-            Enums.TransactionStatus.FILLED,
-            Enums.TransactionStatus.EXPIRED));
-    type.addAll(Arrays.asList(Enums.TransactionType.BUY, Enums.TransactionType.SELL));
+    // Only gets 1 page of transactions but whatever... TODO...
+    List<PendingTransaction> pendingTriggers =
+        pendingTransactionRepository.findByUserNameOrderByCreatedDate(username);
     List<Transaction> closedTransactions =
-        transactionRepository.findByUserNameAndStatusInAndTypeInOrderByCreatedDate(
-            username, status, type);
+        transactionRepository.findByUserNameOrderByCreatedDate(username);
 
     Summary newSummary = new Summary(username, summaryAccount);
     newSummary.setPendingTriggers(pendingTriggers);
