@@ -1,5 +1,6 @@
 package com.daytrade.stocktrade.Models;
 
+import com.daytrade.stocktrade.Models.Transactions.PendingTransaction;
 import java.util.List;
 import lombok.Data;
 
@@ -17,5 +18,5 @@ public class Summary {
 
   public List<Transaction> closedTransactions;
 
-  public List<Transaction> pendingTriggers;
+  public List<PendingTransaction> pendingTriggers;
 }

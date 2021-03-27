@@ -17,4 +17,6 @@ public interface PendingTransactionRepository extends MongoRepository<PendingTra
       String userName, Enums.TransactionType sellAt, String stockTicker);
 
   List<PendingTransaction> findAllByCreatedDateBefore(Instant minus);
+
+  List<PendingTransaction> findByUserNameOrderByCreatedDate(String username);
 }
