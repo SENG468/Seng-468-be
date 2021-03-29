@@ -460,6 +460,7 @@ public class TransactionService {
         loggerService.createTransactionSysEventLog(order, Enums.CommandType.COMMIT_SELL, null);
       }
     }
+    transactionRepository.saveAll(orders);
   }
 
   public void fillBuyLimitOrders() throws InterruptedException {
@@ -483,6 +484,7 @@ public class TransactionService {
         loggerService.createTransactionSysEventLog(order, Enums.CommandType.COMMIT_BUY, null);
       }
     }
+    transactionRepository.saveAll(orders);
   }
 
   private Account refundForLowerBuyPrice(Transaction order) {
