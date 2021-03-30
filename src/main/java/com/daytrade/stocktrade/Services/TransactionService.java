@@ -198,7 +198,10 @@ public class TransactionService {
       throw new EntityMissingException();
     }
     PendingTransaction recentTransaction = buyTransactions.get(0);
-    recentTransaction.setTransactionId(cmd.getTransactionId());
+    recentTransaction.setTransactionId(
+        cmd.getTransactionId() != null
+            ? cmd.getTransactionId()
+            : recentTransaction.getTransactionId());
     return recentTransaction;
   }
 
@@ -368,7 +371,7 @@ public class TransactionService {
 
   public Transaction cancelTransaction(Transaction transaction) {
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
-    pendingTransactionRepository.deleteById(transaction.getTransactionId());
+    pendingTransactionRepository.deleteById(transaction.getId());
     return transactionRepository.save(transaction);
   }
 
@@ -429,7 +432,7 @@ public class TransactionService {
   public Transaction cancelSellLimitTransaction(Transaction transaction) {
     accountService.refundStockFromTransaction(transaction);
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
-    pendingTransactionRepository.deleteById(transaction.getTransactionId());
+    pendingTransactionRepository.deleteById(transaction.getId());
     return transactionRepository.save(transaction);
   }
 
@@ -446,7 +449,7 @@ public class TransactionService {
 
       accountService.save(account);
     }
-    pendingTransactionRepository.deleteById(transaction.getTransactionId());
+    pendingTransactionRepository.deleteById(transaction.getId());
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
     return transactionRepository.save(transaction);
   }
