@@ -345,7 +345,7 @@ public class TransactionService {
         || transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
       if (!transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
         long stockAmount = stocks.get(transaction.getStockCode()) - transaction.getStockAmount();
-        if(stockAmount > 0){
+        if (stockAmount > 0) {
           stocks.put(transaction.getStockCode(), stockAmount);
         } else {
           stocks.remove(transaction.getStockCode());
