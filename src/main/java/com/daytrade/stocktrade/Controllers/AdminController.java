@@ -16,10 +16,11 @@ public class AdminController {
   private final PendingTransactionRepository pendingTransactionRepository;
 
   public AdminController(
-          UserRepository userRepository,
-          TransactionRepository transactionRepository,
-          LoggerRepository loggerRepository,
-          AccountRepository accountRepository, PendingTransactionRepository pendingTransactionRepository) {
+      UserRepository userRepository,
+      TransactionRepository transactionRepository,
+      LoggerRepository loggerRepository,
+      AccountRepository accountRepository,
+      PendingTransactionRepository pendingTransactionRepository) {
     this.userRepository = userRepository;
     this.transactionRepository = transactionRepository;
     this.loggerRepository = loggerRepository;

@@ -423,6 +423,7 @@ public class TransactionService {
   public Transaction cancelSellLimitTransaction(Transaction transaction) {
     accountService.refundStockFromTransaction(transaction);
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
+    pendingTransactionRepository.deleteById(transaction.getTransactionId());
     return transactionRepository.save(transaction);
   }
 
@@ -436,6 +437,7 @@ public class TransactionService {
             transaction.getTransactionId(),
             "add",
             transaction.getCashAmount());
+      pendingTransactionRepository.deleteById(transaction.getTransactionId());
       accountService.save(account);
     }
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
