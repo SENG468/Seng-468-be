@@ -345,7 +345,12 @@ public class TransactionService {
         || transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
       if (!transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
         long stockAmount = stocks.get(transaction.getStockCode()) - transaction.getStockAmount();
-        stocks.put(transaction.getStockCode(), stockAmount);
+        if (stockAmount > 0) {
+          stocks.put(transaction.getStockCode(), stockAmount);
+        } else {
+          stocks.remove(transaction.getStockCode());
+        }
+
         account.setPortfolio(stocks);
       }
       double newMoney =
@@ -363,6 +368,7 @@ public class TransactionService {
 
   public Transaction cancelTransaction(Transaction transaction) {
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
+    pendingTransactionRepository.deleteById(transaction.getTransactionId());
     return transactionRepository.save(transaction);
   }
 
@@ -423,6 +429,7 @@ public class TransactionService {
   public Transaction cancelSellLimitTransaction(Transaction transaction) {
     accountService.refundStockFromTransaction(transaction);
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
+    pendingTransactionRepository.deleteById(transaction.getTransactionId());
     return transactionRepository.save(transaction);
   }
 
@@ -436,6 +443,7 @@ public class TransactionService {
             transaction.getTransactionId(),
             "add",
             transaction.getCashAmount());
+      pendingTransactionRepository.deleteById(transaction.getTransactionId());
       accountService.save(account);
     }
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
