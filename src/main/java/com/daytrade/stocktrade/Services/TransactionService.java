@@ -363,6 +363,7 @@ public class TransactionService {
 
   public Transaction cancelTransaction(Transaction transaction) {
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
+    pendingTransactionRepository.deleteById(transaction.getTransactionId());
     return transactionRepository.save(transaction);
   }
 
