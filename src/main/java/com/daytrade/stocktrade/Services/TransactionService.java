@@ -443,9 +443,10 @@ public class TransactionService {
             transaction.getTransactionId(),
             "add",
             transaction.getCashAmount());
-      pendingTransactionRepository.deleteById(transaction.getTransactionId());
+
       accountService.save(account);
     }
+    pendingTransactionRepository.deleteById(transaction.getTransactionId());
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
     return transactionRepository.save(transaction);
   }
