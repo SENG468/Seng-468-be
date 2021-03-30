@@ -18,5 +18,7 @@ public class Summary {
 
   public List<Transaction> closedTransactions;
 
-  public List<PendingTransaction> pendingTriggers;
+  public List<Transaction> openTriggers;
+
+  public List<PendingTransaction> pendingTransactions;
 }
