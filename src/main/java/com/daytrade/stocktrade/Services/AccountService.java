@@ -10,6 +10,8 @@ import com.daytrade.stocktrade.Models.Transactions.PendingTransaction;
 import com.daytrade.stocktrade.Repositories.AccountRepository;
 import com.daytrade.stocktrade.Repositories.PendingTransactionRepository;
 import com.daytrade.stocktrade.Repositories.TransactionRepository;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,14 +96,19 @@ public class AccountService {
   public Summary generateSummary(String username) throws EntityMissingException {
     Account summaryAccount = getByName(username);
 
+    List<Enums.TransactionStatus> status = new ArrayList<>();
+    status.add(Enums.TransactionStatus.COMMITTED);
     // Only gets 1 page of transactions but whatever... TODO...
-    List<PendingTransaction> pendingTriggers =
+    List<PendingTransaction> pendingTransactions =
         pendingTransactionRepository.findByUserNameOrderByCreatedDate(username);
     List<Transaction> closedTransactions =
-        transactionRepository.findByUserNameOrderByCreatedDate(username);
+        transactionRepository.findByUserNameAndStatusNotInOrderByCreatedDate(username, status);
+    List<Transaction> openTriggers =
+        transactionRepository.findByUserNameAndStatusInOrderByCreatedDate(username, status);
 
     Summary newSummary = new Summary(username, summaryAccount);
-    newSummary.setPendingTriggers(pendingTriggers);
+    newSummary.setPendingTransactions(pendingTransactions);
+    newSummary.setOpenTriggers(openTriggers);
     newSummary.setClosedTransactions(closedTransactions);
     return newSummary;
   }
