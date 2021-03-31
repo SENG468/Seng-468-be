@@ -468,6 +468,7 @@ public class TransactionService {
         order.setStatus(Enums.TransactionStatus.FILLED);
         // Set the unit price to the quote price if its higher
         order.setUnitPrice(quote.getUnitPrice());
+        order.setCashAmount(quote.getUnitPrice() * order.getStockAmount());
         updateAccount(order);
         loggerService.createTransactionSysEventLog(order, Enums.CommandType.COMMIT_SELL, null);
       }
@@ -491,6 +492,7 @@ public class TransactionService {
           // Set the unit price to the quote price if its lower
           order.setUnitPrice(quote.getUnitPrice());
           refundForLowerBuyPrice(order);
+          order.setCashAmount(quote.getUnitPrice() * order.getStockAmount());
         }
         updateAccount(order);
         loggerService.createTransactionSysEventLog(order, Enums.CommandType.COMMIT_BUY, null);
