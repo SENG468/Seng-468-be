@@ -345,7 +345,11 @@ public class LoggerService {
     Element root = doc.createElement("log");
 
     doc.appendChild(root);
-    loggerRepository.findAll().stream().forEach(r -> root.appendChild(createLogElement(doc, r)));
+    if (username == null) {
+      loggerRepository.findAll().stream().forEach(r -> root.appendChild(createLogElement(doc, r)));
+    } else {
+      loggerRepository.findAllByUserName(username).stream().forEach(r -> root.appendChild(createLogElement(doc, r)));
+    }
     return doc;
   }
 
