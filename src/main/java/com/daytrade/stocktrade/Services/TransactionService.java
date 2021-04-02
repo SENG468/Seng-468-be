@@ -408,7 +408,11 @@ public class TransactionService {
           transaction, Enums.CommandType.SET_SELL_AMOUNT, "Not enough stock");
       throw new BadRequestException("You cannot afford this");
     }
-    stocks.put(transaction.getStockCode(), heldStock - stockToSell);
+    if (heldStock - stockToSell > 0) {
+      stocks.put(transaction.getStockCode(), heldStock - stockToSell);
+    } else {
+      stocks.remove(transaction.getStockCode());
+    }
     account.setPortfolio(stocks);
     return accountService.save(account);
   }
