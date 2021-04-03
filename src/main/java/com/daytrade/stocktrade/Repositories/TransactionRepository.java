@@ -1,7 +1,7 @@
 package com.daytrade.stocktrade.Repositories;
 
 import com.daytrade.stocktrade.Models.Enums;
-import com.daytrade.stocktrade.Models.Transaction;
+import com.daytrade.stocktrade.Models.Transactions.Transaction;
 import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
@@ -24,5 +24,6 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
   List<Transaction> findByUserNameAndStatusInOrderByCreatedDate(
       String name, List<Enums.TransactionStatus> status);
 
-  List<Transaction> findByUserNameAndStatusNotInOrderByCreatedDate(String username, List<Enums.TransactionStatus> status);
+  List<Transaction> findByUserNameAndStatusNotInOrderByCreatedDate(
+      String username, List<Enums.TransactionStatus> status);
 }

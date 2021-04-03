@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
+// Override of built in spring class for custom auth
 public class UserDetailsServiceImpl implements UserDetailsService {
   private final UserService userService;
 
@@ -18,6 +19,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
   }
 
   @Override
+  // Custom load of users to set user storage collection
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
     User user = userService.findByUsername(username);
     if (user == null) {

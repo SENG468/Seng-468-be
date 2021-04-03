@@ -12,8 +12,7 @@ public class OrderManagementThread {
   private final TransactionService transactionService;
 
   @Autowired
-  public OrderManagementThread(
-      AccountService accountService, TransactionService transactionService) {
+  public OrderManagementThread(TransactionService transactionService) {
     this.transactionService = transactionService;
   }
 

@@ -1,5 +1,6 @@
-package com.daytrade.stocktrade.Models;
+package com.daytrade.stocktrade.Models.Transactions;
 
+import com.daytrade.stocktrade.Models.Enums;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -35,6 +36,7 @@ public class Transaction {
   private Double unitPrice;
 
   public void setCashAmount(Double cashAmount) {
+    // Cut off after 2 decimals
     this.cashAmount = BigDecimal.valueOf(cashAmount).setScale(2, RoundingMode.FLOOR).doubleValue();
   }
 }

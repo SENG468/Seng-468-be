@@ -5,12 +5,11 @@ import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Summary;
-import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Models.Transactions.PendingTransaction;
+import com.daytrade.stocktrade.Models.Transactions.Transaction;
 import com.daytrade.stocktrade.Repositories.AccountRepository;
 import com.daytrade.stocktrade.Repositories.PendingTransactionRepository;
 import com.daytrade.stocktrade.Repositories.TransactionRepository;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

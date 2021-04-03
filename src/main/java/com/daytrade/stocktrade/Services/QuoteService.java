@@ -38,9 +38,10 @@ public class QuoteService {
     this.debug = debug;
   }
 
-  public Quote getQuote(String userId, String stockSymbol, String transactionNumber)
-      throws InterruptedException {
+  public Quote getQuote(String userId, String stockSymbol, String transactionNumber) {
+    // Try to get quote from cache
     Quote cachedQuote = cacheService.getCacheQuote(stockSymbol);
+    // cache miss
     if (cachedQuote == null) {
       Socket qsSocket = null;
       PrintWriter out = null;
@@ -80,7 +81,6 @@ public class QuoteService {
       }
 
       try {
-        // System.out.println("Connected");
         if (out != null) {
           // I don't think we need these replaces but just incase
           out.println(
@@ -94,15 +94,16 @@ public class QuoteService {
         } else {
           delay = 8;
         }
+        // delay to stop overloading quote server
         Thread.sleep((long) delay);
+        // Unlock now so new requests can be sent before he response is received. Lock only has to
+        // spread requests
         mutex.unlock();
         String fromServer = "";
         if (in != null) {
           fromServer = in.readLine();
         }
 
-        // System.out.print(fromServer);
-        // TODO: remove message in final revision
         if (out != null) {
           out.close();
         }

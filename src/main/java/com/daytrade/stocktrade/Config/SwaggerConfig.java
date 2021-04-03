@@ -13,6 +13,7 @@ public class SwaggerConfig {
   public OpenAPI customOpenAPI() {
     final String securitySchemeName = "Auth Token";
 
+    // Sets up authorize button in swagger
     return new OpenAPI()
         .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
         .components(

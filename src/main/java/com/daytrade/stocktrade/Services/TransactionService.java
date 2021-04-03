@@ -6,8 +6,8 @@ import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.BadRequestException;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.Quote;
-import com.daytrade.stocktrade.Models.Transaction;
 import com.daytrade.stocktrade.Models.Transactions.PendingTransaction;
+import com.daytrade.stocktrade.Models.Transactions.Transaction;
 import com.daytrade.stocktrade.Repositories.PendingTransactionRepository;
 import com.daytrade.stocktrade.Repositories.TransactionRepository;
 import java.time.Instant;
@@ -60,6 +60,7 @@ public class TransactionService {
             .getUnitPrice();
     Account account = accountService.getByName(transaction.getUserName());
 
+    // Request not properly formatted
     if (transaction.getCashAmount() == null) {
       loggerService.createTransactionErrorLog(
           transaction, Enums.CommandType.BUY, "Simple Buy - Invalid Request");
@@ -82,6 +83,7 @@ public class TransactionService {
     transaction.setCashAmount(quote * stockAmount);
     transaction.setStockAmount(stockAmount);
     transaction.setStatus(Enums.TransactionStatus.PENDING);
+    // Create entry in pending collection
     return pendingTransactionRepository.save(transaction);
   }
 
@@ -348,6 +350,7 @@ public class TransactionService {
         || transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
       if (!transaction.getType().equals(Enums.TransactionType.SELL_AT)) {
         long stockAmount = stocks.get(transaction.getStockCode()) - transaction.getStockAmount();
+        // Remove entry if 0 value
         if (stockAmount > 0) {
           stocks.put(transaction.getStockCode(), stockAmount);
         } else {
@@ -372,6 +375,7 @@ public class TransactionService {
   public Transaction cancelTransaction(Transaction transaction) {
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
     pendingTransactionRepository.deleteById(transaction.getId());
+    // Move cancelled transaction to non pending collection
     return transactionRepository.save(transaction);
   }
 
@@ -396,6 +400,7 @@ public class TransactionService {
       removeMoneyForHold(savedTransaction.getCashAmount(), savedTransaction);
     }
     pendingTransactionRepository.delete(savedTransaction);
+    // Move commited transaction to new collection
     return transactionRepository.save(savedTransaction);
   }
 
@@ -437,6 +442,7 @@ public class TransactionService {
     accountService.refundStockFromTransaction(transaction);
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
     pendingTransactionRepository.deleteById(transaction.getId());
+    // Move canceled transaction to new collection
     return transactionRepository.save(transaction);
   }
 
@@ -455,10 +461,6 @@ public class TransactionService {
     }
     pendingTransactionRepository.deleteById(transaction.getId());
     transaction.setStatus(Enums.TransactionStatus.CANCELED);
-    return transactionRepository.save(transaction);
-  }
-
-  public Transaction save(Transaction transaction) {
     return transactionRepository.save(transaction);
   }
 

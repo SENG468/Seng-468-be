@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootApplication
+// Enable audits for auto timestamp generation
 @EnableMongoAuditing
 public class StocktradeApplication {
 

@@ -30,7 +30,7 @@ public class RedisConfig {
   @Bean
   CacheManager cacheManager(RedissonClient redissonClient) {
     Map<String, CacheConfig> config = new HashMap<>();
-    // create "testMap" spring cache with ttl = 1 minutes and maxIdleTime = 12 minutes
+    // ttl of 1 minute and a max idle of 12 mins
     config.put("quotes", new CacheConfig(60 * 1000, 12 * 60 * 1000));
     return new RedissonSpringCacheManager(redissonClient, config);
   }
