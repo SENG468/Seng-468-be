@@ -17,7 +17,6 @@ public class UserService {
   public UserService(
       UserRepository userRepository,
       AccountService accountService,
-      LoggerService loggerService,
       BCryptPasswordEncoder passwordEncoder) {
     this.userRepository = userRepository;
     this.accountService = accountService;
@@ -35,7 +34,7 @@ public class UserService {
       throw new BadRequestException("A user with this username already exist");
     }
   }
-
+  // Required by spring for auth
   public User findByUsername(String username) {
     return userRepository.findByUsername(username);
   }

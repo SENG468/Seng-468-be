@@ -4,7 +4,7 @@ import com.daytrade.stocktrade.Models.Enums;
 import com.daytrade.stocktrade.Models.Exceptions.EntityMissingException;
 import com.daytrade.stocktrade.Models.LogRequest;
 import com.daytrade.stocktrade.Models.Logger;
-import com.daytrade.stocktrade.Models.Transaction;
+import com.daytrade.stocktrade.Models.Transactions.Transaction;
 import com.daytrade.stocktrade.Repositories.LoggerRepository;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,7 +14,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -46,13 +45,11 @@ public class LoggerService {
   }
 
   public Page<Logger> getByUserName(String username, Pageable page) {
-    Page<Logger> results =
-        loggerRepository.findByUserName(username, page).orElseThrow(EntityMissingException::new);
-    return results;
+    return loggerRepository.findByUserName(username, page).orElseThrow(EntityMissingException::new);
   }
 
   public StreamingResponseBody generateLogFile(LogRequest request)
-      throws ParserConfigurationException, TransformerException {
+      throws ParserConfigurationException {
     createCommandLog(
         request.getUsername(),
         request.getTransactionId(),
@@ -276,10 +273,6 @@ public class LoggerService {
             filename,
             funds,
             errorMessage);
-    //    try {
-    //      System.out.print(new ObjectMapper().writeValueAsString(log));
-    //    } catch (Exception ex) {
-    //    }
     return loggerRepository.save(log);
   }
 
@@ -329,26 +322,41 @@ public class LoggerService {
       Double funds,
       String message) {
     Logger log = new Logger(logType, transactionNumber, this.serverName);
-    if (user != null) log.setUserName(user);
-    if (commandType != null) log.setCommandType(commandType);
-    if (stockSymbol != null) log.setStockSymbol(stockSymbol);
-    if (filename != null) log.setFileName(filename);
-    if (funds != null) log.setFunds(funds);
-    if (message != null) log.setMessage(message);
+    if (user != null) {
+      log.setUserName(user);
+    }
+    if (commandType != null) {
+      log.setCommandType(commandType);
+    }
+    if (stockSymbol != null) {
+      log.setStockSymbol(stockSymbol);
+    }
+    if (filename != null) {
+      log.setFileName(filename);
+    }
+    if (funds != null) {
+      log.setFunds(funds);
+    }
+    if (message != null) {
+      log.setMessage(message);
+    }
     return log;
   }
 
   private Document getLogs(String username) throws ParserConfigurationException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = factory.newDocumentBuilder();
+    // TODO investigate StAX library in future to make more memory efficient
     Document doc = builder.newDocument();
     Element root = doc.createElement("log");
 
     doc.appendChild(root);
+    // This takes advantage of streams and mongo so it should reduce the memory usage for the query
     if (username == null) {
       loggerRepository.findAll().stream().forEach(r -> root.appendChild(createLogElement(doc, r)));
     } else {
-      loggerRepository.findAllByUserName(username).stream().forEach(r -> root.appendChild(createLogElement(doc, r)));
+      loggerRepository.findAllByUserName(username).stream()
+          .forEach(r -> root.appendChild(createLogElement(doc, r)));
     }
     return doc;
   }

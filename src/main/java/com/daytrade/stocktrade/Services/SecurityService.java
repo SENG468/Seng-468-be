@@ -9,11 +9,10 @@ import org.springframework.stereotype.Service;
 public class SecurityService {
 
   public String getUserFromJwt(String token) {
-    String user =
-        JWT.require(Algorithm.HMAC512(SecurityConsts.SECRET.getBytes()))
-            .build()
-            .verify(token.replace(SecurityConsts.AUTH_HEADER_PREFIX, ""))
-            .getSubject();
-    return user;
+    // Load user from the jwt
+    return JWT.require(Algorithm.HMAC512(SecurityConsts.SECRET.getBytes()))
+        .build()
+        .verify(token.replace(SecurityConsts.AUTH_HEADER_PREFIX, ""))
+        .getSubject();
   }
 }

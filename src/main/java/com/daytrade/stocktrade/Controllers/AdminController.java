@@ -29,6 +29,7 @@ public class AdminController {
     this.pendingTransactionRepository = pendingTransactionRepository;
   }
 
+  // Dumps entire db used to clear db
   @DeleteMapping("/dump")
   public String dumpDb() {
     userRepository.deleteAll();
